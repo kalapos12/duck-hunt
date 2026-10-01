@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 <title>Duck Hunt: Flight Frenzy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +38,7 @@ body{position:fixed;inset:0}
 @keyframes hurt{0%{opacity:.5}100%{opacity:0}}
 
 /* HUD */
-#hud{position:fixed;left:14px;top:12px;z-index:5;display:flex;gap:12px;flex-wrap:wrap;pointer-events:none}
+#hud{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));z-index:5;display:flex;gap:12px;flex-wrap:wrap;pointer-events:none}
 .card{background:var(--ink);border:3px solid #f4f4f4;box-shadow:inset 2px 2px 0 rgba(255,255,255,.14),inset -2px -2px 0 rgba(0,0,0,.4),0 0 0 3px #000,4px 4px 0 3px rgba(0,0,0,.45);
  padding:8px 10px;min-width:92px}
 .label{font-size:8px;color:#94b0c2;margin-bottom:8px;letter-spacing:1px}
@@ -53,7 +57,7 @@ body{position:fixed;inset:0}
 #dogVal{min-width:6ch}
 
 /* Vezérlők */
-#controls{position:fixed;right:14px;top:12px;z-index:5;background:var(--ink);border:3px solid #f4f4f4;
+#controls{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:5;background:var(--ink);border:3px solid #f4f4f4;
  box-shadow:0 0 0 3px #000,4px 4px 0 3px rgba(0,0,0,.45);padding:8px 10px}
 #controls .btn{margin:0}
 .btn{font-family:var(--px);font-size:10px;padding:9px 12px;margin-top:8px;background:var(--gold);color:var(--ink);border:3px solid #000;
@@ -75,7 +79,7 @@ body{position:fixed;inset:0}
  background-image:linear-gradient(45deg,rgba(0,0,0,.4) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.4) 75%),linear-gradient(45deg,rgba(0,0,0,.4) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.4) 75%);
  background-size:4px 4px;background-position:0 0,2px 2px}
 .panel{width:min(640px,92vw);background:var(--ink);border:4px solid #f4f4f4;box-shadow:0 0 0 4px #000,10px 10px 0 4px rgba(0,0,0,.5);
- padding:28px 26px;text-align:center}
+ padding:28px 26px;text-align:center;max-height:96vh;max-height:96dvh;overflow:auto;touch-action:pan-y;overscroll-behavior:contain}
 .panel h1{font-size:clamp(20px,4.6vw,38px);margin:0 0 18px;color:var(--gold);line-height:1.3;
  text-shadow:3px 3px 0 #b13e53,6px 6px 0 #000}
 .panel p{font-size:10px;line-height:1.9;color:#c8d6e0;margin:0}
@@ -101,19 +105,27 @@ input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:24px;background:var(--gold);border:3px solid #000;box-shadow:inset -2px -2px 0 #d08030;cursor:pointer}
 input[type=range]::-moz-range-thumb{width:10px;height:18px;background:var(--gold);border:3px solid #000;border-radius:0;cursor:pointer}
 #fsRow .btn{width:100%;margin:0}
-@media (pointer:coarse){.deskonly{display:none}}
+.deskonly{display:none}                                    /* egér-érzékenység: csak ha van egér/touchpad */
+@media (any-pointer:fine){.deskonly{display:block}}
+body.touch .kb{display:none}
 
 /* Mobil / érintés */
 #reloadBtn{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:6;
  display:none;width:64px;height:64px;padding:0;margin:0;font-size:8px;line-height:1.4}
-@media (pointer:coarse){#reloadBtn{display:block}}
+body.touch #reloadBtn{display:block}
 #dogBtn{position:fixed;right:calc(max(14px,env(safe-area-inset-right)) + 74px);bottom:max(14px,env(safe-area-inset-bottom));z-index:6;
  display:none;width:64px;height:64px;padding:0;margin:0;font-size:8px;line-height:1.4}
-@media (pointer:coarse){#dogBtn{display:block}}
+body.touch #dogBtn{display:block}
+#reloadBtn,#dogBtn{opacity:.85}
+/* érintős eszközön: könnyebb effektek a folyamatos futáshoz */
+body.touch #game{filter:none}
+body.touch #crt{animation:none}
+body.touch #crt:after{display:none}
+@media (prefers-reduced-motion:reduce){#crt,#crt:after{animation:none}}
 #rotate{position:fixed;inset:0;z-index:30;background:#1a1c2c;color:#ffcd75;display:none;align-items:center;justify-content:center;
  text-align:center;padding:24px;font-size:14px;line-height:2.2;text-shadow:3px 3px 0 #000}
-@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
-@media (max-height:520px){
+@media (orientation:portrait){#rotate{display:flex}}
+@media (max-height:520px),(max-width:900px){
  #hud{left:max(8px,env(safe-area-inset-left));top:6px;gap:6px}
  .card{padding:4px 6px;min-width:0;border-width:2px;box-shadow:0 0 0 2px #000,3px 3px 0 2px rgba(0,0,0,.45)}
  .label{font-size:6px;margin-bottom:4px}
@@ -144,9 +156,51 @@ input[type=range]::-moz-range-thumb{width:10px;height:18px;background:var(--gold
  #reloadBtn{width:52px;height:52px;font-size:6px}
  #dogBtn{width:52px;height:52px;font-size:6px;right:calc(max(14px,env(safe-area-inset-right)) + 62px)}
 }
+/* Főmenü / slotok / nehézség */
+#titleArt{display:none;width:100vw;height:100vh;height:100dvh;image-rendering:crisp-edges;image-rendering:pixelated;filter:contrast(1.08) saturate(1.18)}
+body.titlemode #titleArt{display:block}
+body.titlemode #game,body.titlemode #hud,body.titlemode #controls,body.titlemode #reloadBtn,body.titlemode #dogBtn,body.titlemode #toast{display:none}
+body.touch #titleArt{filter:none}
+#start.title{background:none}
+.panel{background:rgba(26,28,44,.94)}
+.panel.plain{background:none;border:0;box-shadow:none;width:min(720px,94vw)}
+.panel.plain h1{font-size:clamp(34px,8.5vw,84px);line-height:1.15;margin-bottom:14px;text-shadow:4px 4px 0 #b13e53,8px 8px 0 #000}
+.panel.plain p{font-size:clamp(9px,1.6vw,13px);color:#ffe8c0;text-shadow:2px 2px 0 #000;letter-spacing:2px}
+.panel.plain #ovBest{text-shadow:2px 2px 0 #000}
+.panel.plain .hint{color:#e8c8b0!important;text-shadow:2px 2px 0 #000}
+.panel.wide{width:min(820px,94vw)}
+.slots,.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.slotcard,.diffcard{font-family:var(--px);color:#c8d6e0;background:#29366f;border:3px solid #000;padding:14px 8px;cursor:pointer;text-align:center;
+ box-shadow:inset 3px 3px 0 rgba(255,255,255,.18),inset -3px -3px 0 rgba(0,0,0,.35)}
+.slotcard:hover,.diffcard:hover{filter:brightness(1.25);transform:translateY(-2px)}
+.slotcard.empty{background:#222a52;color:#7b8fa0}
+.slotcard .num{font-size:26px;color:var(--gold);text-shadow:3px 3px 0 #000;margin-bottom:10px}
+.slotcard.empty .num{color:#566c86}
+.slotcard .nm,.diffcard .dn{font-size:11px;margin-bottom:10px}
+.diffcard .dn{font-size:15px;text-shadow:2px 2px 0 #000;margin:6px 0 12px}
+.slotcard .ln,.diffcard .ln{font-size:8px;line-height:2;color:#c8d6e0}
+.slotcard b{color:var(--gold);font-weight:400}
+.slotcard .run,.diffcard .run{margin-top:10px;font-size:7px;line-height:1.8;color:#a7f070;border-top:2px dashed #566c86;padding-top:8px}
+.diffcard.last{border-color:var(--gold)}
+.help{text-align:left;margin-top:14px}
+.help p{margin:0 0 10px}
+@media (max-height:520px),(max-width:900px){
+ .slots,.diffs{gap:6px;margin-top:8px}
+ .slotcard,.diffcard{padding:8px 4px;border-width:2px}
+ .slotcard .num{font-size:16px;margin-bottom:5px}
+ .slotcard .nm{font-size:8px;margin-bottom:5px}
+ .diffcard .dn{font-size:10px;margin:2px 0 6px}
+ .slotcard .ln,.diffcard .ln{font-size:6px;line-height:1.7}
+ .slotcard .run,.diffcard .run{font-size:5px;margin-top:5px;padding-top:4px}
+ .panel.plain h1{font-size:clamp(26px,9vh,48px)}
+ .panel.plain h1 br{display:block}
+ .panel.plain .menu{grid-template-columns:1fr 1fr}
+ .help p{margin-bottom:5px}
+}
 </style>
 </head>
 <body>
+<canvas id="titleArt"></canvas>
 <canvas id="game"></canvas>
 
 <div id="hud">
@@ -156,7 +210,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:18px;background:var(--gold
   <div class="card"><div class="label">LÁNC</div><div class="value" id="combo">0×</div></div>
   <div class="card"><div class="label">KACSA</div><div class="value" id="ducks">0</div></div>
   <div class="card"><div class="label">LŐSZER</div><div id="shells"></div></div>
-  <div class="card ready" id="dogCard"><div class="label">KUTYA [Q]</div><div class="value" id="dogVal">KÉSZ</div></div>
+  <div class="card ready" id="dogCard"><div class="label">KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
 <div id="controls"><button class="btn" id="menuBtn">MENÜ</button></div>
@@ -166,27 +220,14 @@ input[type=range]::-moz-range-thumb{width:10px;height:18px;background:var(--gold
 <div id="crt"></div>
 <button class="btn" id="reloadBtn">ÚJRA-<br>TÖLT</button>
 <button class="btn" id="dogBtn">KUTYA</button>
-<div id="rotate">FORGASD FEKVŐ<br>HELYZETBE<br>A TELEFONT!</div>
+<div id="rotate">FORGASD FEKVŐ<br>HELYZETBE<br>A KÉSZÜLÉKET!</div>
 
 <div id="start">
   <div class="panel">
-    <h1 id="ovTitle">DUCK<br>FLIGHT</h1>
+    <h1 id="ovTitle">DUCK <br>FLIGHT</h1>
     <p id="ovText"></p>
-    <div class="legend" id="ovLegend">
-      <div><span class="easy">KÖNNYŰ</span><br>lassú,<br>kiszámítható</div>
-      <div><span class="normal">NORMÁL</span><br>változatos<br>pályák</div>
-      <div><span class="extreme">EXTRÉM</span><br>őrült<br>manőverek</div>
-    </div>
+    <div id="screenBody"></div>
     <div id="settings">
-      <div class="setrow">
-        <div class="setlabel">NEHÉZSÉG</div>
-        <div class="seg" id="diffSeg">
-          <button class="segbtn" data-v="easy">KÖNNYŰ</button>
-          <button class="segbtn" data-v="normal">NORMÁL</button>
-          <button class="segbtn" data-v="extreme">EXTRÉM</button>
-        </div>
-        <div class="setdesc" id="diffDesc"></div>
-      </div>
       <div class="setrow deskonly">
         <div class="setlabel"><span>ÉRZÉKENYSÉG</span><span id="sensVal">1.0×</span></div>
         <input type="range" id="sens" min="0.3" max="3" step="0.1" value="1">
@@ -207,9 +248,9 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const scoreEl=$("score"),comboEl=$("combo"),ducksEl=$("ducks"),heartsEl=$("hearts"),shellsEl=$("shells"),
       overlay=$("start"),
       toast=$("toast"),hurtEl=$("hurt"),ovTitle=$("ovTitle"),ovText=$("ovText"),
-      ovLegend=$("ovLegend"),ovBest=$("ovBest"),ovHint=$("ovHint"),
+      ovBest=$("ovBest"),ovHint=$("ovHint"),
       menuBtn=$("menuBtn"),fsBtn=$("fsBtn"),reloadBtn=$("reloadBtn"),settingsEl=$("settings"),menuBtns=$("menuBtns"),
-      sensEl=$("sens"),sensVal=$("sensVal"),diffSeg=$("diffSeg"),diffDesc=$("diffDesc"),
+      sensEl=$("sens"),sensVal=$("sensVal"),panel=document.querySelector(".panel"),screenBody=$("screenBody"),titleArt=$("titleArt"),tctx=titleArt.getContext("2d"),
       timerEl=$("timer"),timeCard=$("timeCard"),
       dogBtn=$("dogBtn"),dogCard=$("dogCard"),dogVal=$("dogVal");
 
@@ -454,6 +495,147 @@ function buildBackground(){
   grass=[];                                   // a fű lengése renderelés közben animált
   for(let x=0;x<VW;x+=3)grass.push({x,h:ri(4,12),c:(x/3)%2?"#2b8a2f":"#1e6a2a"});
 }
+/* ====== Címképernyő háttérkép: naplementés tó, hegyek, fenyők, vadkacsa-csapat ====== */
+const PAL_S={};Object.keys(PAL).forEach(k=>PAL_S[k]="#150c2e");
+const DUCKS_S=duckFrames(PAL_S);                       // sziluett-kacsák a csapathoz
+const TGY=124;                                         // horizont (a tó széle)
+let tSky,tMid,tLake,tFront,tSX=200,tStars=[],tSpark=[],tFire=[];
+const TDITHER=DITHER;
+const TS_COLS=["#231450","#3a1d6e","#5c2a84","#8a3a8e","#bc4a88","#e8647a","#ff8c62","#ffb868","#ffdc94"];
+const TCLOUDS=[{x:20,y:28,w:80,sp:2},{x:210,y:46,w:100,sp:1.4},{x:330,y:20,w:60,sp:2.6},{x:120,y:64,w:70,sp:1},{x:-30,y:84,w:90,sp:.8}];
+const FLOCK_NEAR=[[0,0],[-14,-8],[-14,8],[-28,-16],[-28,16],[-42,-24],[-42,24]];
+const FLOCK_FAR=[[0,0],[-9,-5],[-9,5],[-18,-10],[-18,10]];
+function ditherBands(g,cols,y0,h,w){
+  const bh=Math.ceil(h/cols.length);
+  cols.forEach((c,i)=>{g.fillStyle=c;g.fillRect(0,y0+i*bh,w,bh+1)});
+  for(let i=1;i<cols.length;i++){
+    const ys=y0+i*bh;
+    for(let x=0;x<w;x++)for(let dy=-3;dy<=2;dy++){
+      if(dy<0){if(((x+dy)&1)===0){g.fillStyle=cols[i];g.fillRect(x,ys+dy,1,1)}}
+      else if(((x+dy)&1)===1){g.fillStyle=cols[i-1];g.fillRect(x,ys+dy,1,1)}
+    }
+  }
+}
+function buildTitle(){
+  const rnd=mulberry(4242),r=(a,b)=>a+rnd()*(b-a),ri=(a,b)=>Math.floor(r(a,b+1));
+  let g;
+  tSX=Math.round(VW*.6);
+  // --- ég + csíkos naplemente-nap ditheres fénykoszorúval
+  tSky=mk(VW,H);g=tSky.getContext("2d");
+  ditherBands(g,TS_COLS,0,TGY,VW);
+  const cy=TGY-14,R=26;
+  for(let y=cy-R-24;y<=TGY;y++)for(let x=tSX-R-24;x<=tSX+R+24;x++){
+    if(x<0||x>=VW)continue;
+    const d=Math.hypot(x-tSX,y-cy),dy=y-cy;let col=null;
+    if(d<=R){
+      if(dy>1&&(dy%5===0||(dy>8&&dy%5===1)))continue;      // lefelé vastagodó csíkok
+      col=dy<-12?"#fff8d4":dy<0?"#ffe892":dy<10?"#ffc468":"#ff9a58";
+    }else if(d<=R+6){if(((x+y)&1)===0)col="#ffd890"}
+    else if(d<=R+13){if(x%2===0&&y%2===0)col="#ffb070"}
+    else if(d<=R+24){if(x%3===0&&y%3===0)col="#ff9070"}
+    if(col){g.fillStyle=col;g.fillRect(x,y,1,1)}
+  }
+  tStars=[];for(let i=0;i<46;i++)tStars.push({x:ri(0,VW),y:ri(2,46),b:ri(0,7)});
+  // --- hegyek + fenyősor
+  tMid=mk(VW,H);g=tMid.getContext("2d");
+  function ridge(base,a,ph,col,lit,fog){
+    for(let x=0;x<VW;x++){
+      const h=Math.round(base+a[0]*Math.sin(x*.017+ph)+a[1]*Math.sin(x*.049+ph*2.3)+a[2]*Math.sin(x*.12+ph*.7)),top=TGY-h;
+      for(let y=top;y<TGY;y++){
+        let c=col;
+        if(y-top<2)c=lit;
+        else if(TGY-y<14&&((x+y)&1)===0)c=fog;
+        g.fillStyle=c;g.fillRect(x,y,1,1);
+      }
+    }
+  }
+  ridge(44,[15,9,3],1.1,"#7a3a92","#d0588e","#e0607e");
+  ridge(26,[11,6,3],4.2,"#47286f","#8e4296","#a64c88");
+  g.fillStyle="#241454";
+  for(let x=-2;x<VW+4;x+=ri(3,6)){
+    const h=ri(9,17),w=ri(5,8);
+    for(let row=0;row<h;row++){const rw=Math.max(1,Math.round(w*(row+1)/h));g.fillRect(x-(rw>>1),TGY-h+row,rw,1)}
+  }
+  g.fillRect(0,TGY-2,VW,3);
+  // --- tó: ditheres színátmenet, a hegyek halvány tükörképe, hullámok
+  tLake=mk(VW,H);g=tLake.getContext("2d");
+  ditherBands(g,["#ffb868","#ff8c62","#e8647a","#bc4a88","#8a3a8e","#5c2a84","#3a1d6e","#231450"],TGY,H-TGY,VW);
+  g.save();g.globalAlpha=.32;g.translate(0,TGY*2);g.scale(1,-1);g.drawImage(tMid,0,0,VW,TGY,0,0,VW,TGY);g.restore();
+  for(let i=0;i<150;i++){
+    g.globalAlpha=.22;g.fillStyle=(i&1)?"#ffd0a0":"#1a0c3a";
+    g.fillRect(ri(0,VW),ri(TGY+2,H-2),ri(3,12),1);
+  }
+  g.globalAlpha=1;g.fillStyle="#1a1040";g.fillRect(0,TGY,VW,1);
+  tSpark=[];for(let i=0;i<40;i++)tSpark.push({x:ri(0,VW),y:ri(TGY+4,H-6),b:ri(0,9)});
+  tFire=[];for(let i=0;i<22;i++)tFire.push({x:ri(Math.round(VW*.05),Math.round(VW*.95)),y:ri(TGY+6,H-12),b:r(0,6.28),s:r(.6,1.4)});
+  // --- előtér: keretező fenyők, nádas, part-dombok (sziluettek)
+  tFront=mk(VW,H);g=tFront.getContext("2d");
+  const DK1="#120a2e",DK2="#2a1654";
+  function bigPine(cx,base,w,tiers,th,lit){
+    g.fillStyle=DK1;g.fillRect(cx-3,base-14,6,20);
+    for(let t=0;t<tiers;t++){
+      const top=base-26-t*th,tw=Math.max(10,w-t*5);
+      for(let row=0;row<th+10;row++){
+        const rw=Math.max(2,Math.round(tw*(row+1)/(th+10))),x0=cx-(rw>>1);
+        g.fillStyle=DK1;g.fillRect(x0,top+row,rw,1);
+        g.fillStyle=DK2;g.fillRect(lit>0?x0+rw-1:x0,top+row,1,1);        // napfényes perem
+      }
+    }
+  }
+  bigPine(Math.round(VW*.06),H+6,46,7,22,1);
+  bigPine(Math.round(VW*.95),H+6,40,6,22,-1);
+  bigPine(Math.round(VW*.15),H+4,30,5,20,1);
+  bigPine(Math.round(VW*.87),H+4,28,5,20,-1);
+  for(let x=0;x<VW;x+=3){
+    const edge=Math.min(x,VW-x)/VW;
+    const h=ri(5,12)+Math.round((1-Math.min(1,edge*4))*ri(4,18));
+    g.fillStyle=DK1;g.fillRect(x,H-h,1,h);
+    if(((x/3)|0)%5===0&&h>12){g.fillStyle="#3a1c1e";g.fillRect(x-1,H-h-5,3,6);g.fillStyle=DK1;g.fillRect(x,H-h-7,1,3)}
+  }
+  for(let y=0;y<18;y++){
+    const k=(17-y)/18,w=Math.round(Math.sqrt(Math.max(0,1-k*k))*VW*.22);
+    g.fillStyle=DK1;g.fillRect(0,H-18+y,w,1);g.fillRect(VW-w,H-18+y,w,1);
+  }
+}
+function drawFlock(c,formation,lead,ly,s,ph){
+  formation.forEach(([dx,dy],i)=>{
+    const fr=DUCKS_S[[0,1,2,1][Math.floor(time*7+i*1.7+ph)%4]];
+    c.drawImage(fr,0,0,19,18,Math.round(lead+dx),Math.round(ly+dy+Math.sin(time*2+i+ph)*1.5),Math.round(19*s),Math.round(18*s));
+  });
+}
+function renderTitle(){
+  frame++;
+  const c=tctx;
+  c.drawImage(tSky,0,0);
+  for(const s of tStars){
+    if(((frame>>4)+s.b)%5===0)continue;
+    c.fillStyle=(s.b&1)?"#ffffff":"#e0d0ff";c.fillRect(s.x,s.y,1,1);
+  }
+  for(const k of TCLOUDS){                                   // csíkfelhők
+    const x=Math.round(((k.x+time*k.sp)%(VW+160))-80);
+    c.fillStyle="#d85888";c.fillRect(x,k.y,k.w,2);
+    c.fillStyle="#ff9a74";c.fillRect(x+4,k.y+2,k.w-12,1);
+    c.fillStyle="#ffd098";c.fillRect(x+10,k.y+3,Math.max(2,k.w-30),1);
+  }
+  c.drawImage(tMid,0,0);
+  c.drawImage(tLake,0,0);
+  for(let i=0;i<20;i++){                                     // a nap csillogó tükörképe
+    if((i*7+((time*5)|0))%6===0)continue;
+    const w=Math.round(5+i*1.7+Math.sin(time*3+i)*2),y=(TGY+2+i*3.6)|0;
+    c.fillStyle=i%2?"#ffe89a":"#ffc070";
+    c.fillRect(Math.round(tSX+Math.sin(time*2+i*1.3)*2-w/2),y,w,1);
+  }
+  for(const s of tSpark)if(((frame>>3)+s.b)%9===0){c.fillStyle="#fff2c8";c.fillRect(s.x,s.y,2,1)}
+  drawFlock(c,FLOCK_FAR,((time*9+60)%(VW+120))-50,34+Math.sin(time*.5)*3,.5,1.3);
+  drawFlock(c,FLOCK_NEAR,((time*15)%(VW+200))-60,56+Math.sin(time*.7)*5,.85,0);
+  c.drawImage(tFront,0,0);
+  for(const f of tFire){                                     // szentjánosbogarak
+    const a=.5+.5*Math.sin(time*f.s*2+f.b);
+    if(a>.55){c.fillStyle=a>.85?"#fff6b0":"#ffd860";c.fillRect(Math.round(f.x+Math.sin(time*.8+f.b)*5),Math.round(f.y+Math.cos(time*.6+f.b)*4),1,1)}
+  }
+  c.fillStyle=TDITHER;c.fillRect(0,0,VW,H);
+}
+
 function resize(){
   const aspect=innerWidth/innerHeight;
   VW=Math.max(220,Math.round(H*aspect));
@@ -461,6 +643,8 @@ function resize(){
   ctx.imageSmoothingEnabled=false;
   sx=innerWidth/VW;sy=innerHeight/H;
   buildBackground();
+  titleArt.width=VW;titleArt.height=H;tctx.imageSmoothingEnabled=false;
+  buildTitle();
 }
 
 /* ====== Állapot ====== */
@@ -469,15 +653,8 @@ let paused=false,score=0,combo=0,kills=0,ammo=3,hp=3,prevHp=3;
 let ducks=[],falling=[],parts=[],pending=[],lying=[];
 let spawnTimer=0,reloadTimer=0,overTimer=0,time=0,frame=0;
 let recoil=0,pumpT=0,flashT=0,shake=0,tracer=null;
-let best=0;try{best=+localStorage.getItem("dfBest")||0}catch(e){}
 const difficulty={value:"normal"};   // easy | normal | extreme
-let sens=1;                          // egér-érzékenység (0.3–3)
-try{
-  const d=localStorage.getItem("dfDiff");if(d==="easy"||d==="normal"||d==="extreme")difficulty.value=d;
-  const s=parseFloat(localStorage.getItem("dfSens"));if(s>=.3&&s<=3)sens=s;
-}catch(e){}
-function saveSettings(){try{localStorage.setItem("dfDiff",difficulty.value);localStorage.setItem("dfSens",sens)}catch(e){}}
-let menuKind="main",settingsFrom="main",lastLockLoss=0;
+let sens=1,runDirty=false,lastLockLoss=0;
 const mouse={x:160,y:100,over:false};
 
 /* Időzítő + napszak-váltás */
@@ -765,7 +942,7 @@ function updateDog(dt){
       dog.mode=dog.cd>0?"roam":"ready";dog.rt=null;dog.sniff=.5;
     }
   }else if(m==="roam"){
-    if(dog.cd<=0){dog.mode="return";showToast("A KUTYA KÉSZEN ÁLL!  [Q]","#a7f070");return}
+    if(dog.cd<=0){dog.mode="return";showToast("A KUTYA KÉSZEN ÁLL!"+(lastPType==="touch"?"":"  [Q]"),"#a7f070");return}
     if(dog.sniff>0)dog.sniff-=dt;
     else{
       if(!dog.rt)dog.rt={x:rand(16,VW-16),y:rand(GY+40,H-14)};
@@ -812,7 +989,7 @@ function killDuck(i){
   combo++;
   const comboBonus=Math.min(1000,combo*75);
   const pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
-  score+=pts;kills++;
+  score+=pts;kills++;runDirty=true;
   hitstop=.06;screenFlash=.06;
   const bonus=kills%BONUS_EVERY===0,msg=pick(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"])+"  +"+pts;
   if(bonus){
@@ -837,7 +1014,7 @@ function killDuck(i){
   updateHUD();
 }
 function miss(mx,my){
-  combo=0;
+  combo=0;runDirty=true;
   const ground=my>GY;
   const cols=ground?["#7a4a2a","#a8703c","#3c9a2a","#58b833"]:["#ffffff","#ffe066","#ffa020"];
   for(let i=0;i<14;i++){
@@ -863,79 +1040,226 @@ function resetRun(){
   heartEls.forEach(c=>c.classList.remove("lost"));
   updateHUD();
 }
-function startGame(){
-  overlay.style.display="none";
-  resetRun();state="play";
-  showToast("VADÁSZAT INDUL!");
+function startGame(run){
+  hideMenu();
+  resetRun();
+  if(run){                                                   // mentett játék betöltése
+    difficulty.value=run.diff;
+    score=run.score;combo=run.combo;kills=run.kills;ammo=run.ammo;hp=run.hp;prevHp=hp;timeLeft=run.timeLeft;
+    dog.cd=run.dogCd||0;dog.mode=dog.cd>0?"roam":"ready";
+    const ph=Math.min(4,Math.floor(kills/BONUS_EVERY));
+    for(let i=0;i<3;i++)tint[i]=PH[ph][i];
+    sunY=SUNY[ph];
+    updateHUD();
+  }
+  state="play";runDirty=!!run;
+  showToast(run?"FOLYTATÁS!":"VADÁSZAT INDUL!");
   spawnDuck();spawnDuck();
   lock();
 }
-function toMainMenu(){resetRun();state="menu";showMenu("main")}
+function hideMenu(){overlay.style.display="none";document.body.classList.remove("titlemode")}
+function toTitle(){
+  resetRun();state="menu";cur=-1;
+  sens=1;
+  showMenu("title");
+}
 function openPause(){
   if(state!=="play"||paused)return;
-  paused=true;showMenu("pause");
+  paused=true;menuNote="";showMenu("pause");
 }
-function resumeGame(){
-  overlay.style.display="none";paused=false;last=performance.now();
-  lock();
-}
-function openSettings(from){settingsFrom=from;showMenu("settings")}
+function resumeGame(){hideMenu();paused=false;last=performance.now();lock()}
 function showOver(){
-  let nb=false;
-  if(score>best){best=score;nb=true;try{localStorage.setItem("dfBest",best)}catch(e){}}
+  const s=S();let nb=false;
+  if(s){
+    s.stats.games++;s.stats.ducks+=kills;
+    if(score>s.stats.best){s.stats.best=score;nb=true}
+    s.played=Date.now();saveSlots();
+  }
   showMenu("over",nb);
 }
 
+/* ====== Mentési helyek (3 slot): beállítások, statisztika, félbehagyott játék ====== */
+const SLOT_KEY="dfSlots1";
+const DN={easy:"KÖNNYŰ",normal:"NORMÁL",extreme:"EXTRÉM"};
+let slots=[null,null,null],cur=-1,storageOK=true,menuNote="",menuBack=null,menuKind="title",settingsFrom="slotmenu",diffFrom="slotmenu";
+try{
+  localStorage.setItem("dfTest","1");localStorage.removeItem("dfTest");
+  const raw=JSON.parse(localStorage.getItem(SLOT_KEY)||"null");
+  if(Array.isArray(raw))slots=[0,1,2].map(i=>raw[i]&&raw[i].settings&&raw[i].stats?raw[i]:null);
+}catch(e){storageOK=false}
+function saveSlots(){try{localStorage.setItem(SLOT_KEY,JSON.stringify(slots))}catch(e){storageOK=false}}
+function newSlot(i){
+  return{name:"SLOT "+(i+1),created:Date.now(),played:0,
+    settings:{sens:1,diff:"normal"},stats:{best:0,ducks:0,games:0},run:null};
+}
+function S(){return cur>=0?slots[cur]:null}
+function applySlot(){
+  const s=S();if(!s)return;
+  const st=s.settings;
+  sens=st.sens>=.3&&st.sens<=3?st.sens:1;
+  difficulty.value=DN[st.diff]?st.diff:"normal";
+}
+function saveRun(){
+  const s=S();if(!s)return false;
+  s.run={diff:difficulty.value,score,combo,kills,ammo,hp,timeLeft,dogCd:dog.cd,at:Date.now()};
+  s.played=Date.now();saveSlots();runDirty=false;return true;
+}
+const fmt=n=>(+n||0).toLocaleString("hu-HU");
+
 /* ====== Menük ====== */
-const INTRO="Klasszikus kacsavadászat 90-es évekbeli pixelgrafikával. A kacsa bukfencezik, cikázik, zuhan és hirtelen irányt vált. <b>Minél gyorsabb és extrémebb, annál több pont!</b> Ha mellé lősz, elveszítesz egy szívet! Van <b>1 perced</b>, és minden <b>10</b> lelőtt kacsa <b>+15 mp</b>-et ad! A <b>Q</b> gombbal a kutya összeszedi a fűben fekvő kacsákat, és <b>duplázza</b> a pontjukat (30 mp töltés).";
-const HINT="KATT / ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ";
-const DIFF_DESC={
-  easy:"Lassú, kiszámítható kacsák, egyszerre legfeljebb 2.",
-  normal:"Változatos pályák, egyszerre legfeljebb 3 kacsa.",
-  extreme:"Gyors, őrült manőverek, egyszerre legfeljebb 4. Az extrém kacsák több pontot érnek."
-};
+const HINT_KB="KATT = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ";
+const HINT_TOUCH="ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; ÚJRATÖLT. ÉS KUTYA GOMB &nbsp;•&nbsp; MENÜ GOMB";
+const HELP=
+ "<p><b>CÉL:</b> lődd le a repülő kacsákat, amíg le nem jár az idő, vagy el nem fogynak a szíveid.</p>"+
+ "<p><b>GÉP:</b> egér = célzás • bal klikk = lövés • R = újratöltés • Q = kutya • ESC = menü.</p>"+
+ "<p><b>TELEFON:</b> érintsd meg, ahova lőni akarsz • jobb lent az ÚJRATÖLT. és a KUTYA gomb • jobb fent a MENÜ. Fekvő helyzetben játssz!</p>"+
+ "<p><b>PONTOK:</b> minél gyorsabb, magasabb és cikázóbb a kacsa, annál több pont jár. A lövések láncolása extra bónusz.</p>"+
+ "<p><b>SZÍVEK:</b> 3 szíved van, minden mellélövés elvesz egyet.</p>"+
+ "<p><b>IDŐ:</b> 1 perccel indulsz, minden 10. lelőtt kacsa +15 másodpercet ad. Közben telik a nap: nappal, naplemente, éjszaka.</p>"+
+ "<p><b>KUTYA:</b> a lelőtt kacsák a fűben maradnak. Ha megnyomod a Q-t, a kutya összeszedi őket, és a pontjuk megduplázódik. 30 másodpercenként használhatod.</p>"+
+ "<p><b>MENTÉS:</b> a szünet menüben a MENTÉS gombbal a félbehagyott játékot a slotodba teheted, és később onnan folytathatod.</p>";
 function mkBtn(label,fn){
   const b=document.createElement("button");b.className="btn";b.textContent=label;
   b.onclick=()=>{b.blur();fn()};return b;
 }
-function bestLine(nb){return best>0?((nb?"ÚJ REKORD: ":"REKORD: ")+best.toLocaleString("hu-HU")):""}
-function showMenu(kind,nb){
-  menuKind=kind;
-  releaseLock();
-  const st=()=>"Pontszám: <b>"+score.toLocaleString("hu-HU")+"</b><br>Lelőtt kacsák: <b>"+kills+"</b>";
-  ovLegend.style.display=kind==="main"?"":"none";
-  settingsEl.style.display=kind==="settings"?"block":"none";
-  ovText.style.display=kind==="settings"?"none":"";
-  ovBest.style.display=kind==="settings"?"none":"";
-  ovHint.style.display=(kind==="main"||kind==="pause")?"":"none";
-  ovHint.innerHTML=HINT;
-  menuBtns.innerHTML="";
-  if(kind==="main"){
-    ovTitle.innerHTML="DUCK<br>FLIGHT";ovText.innerHTML=INTRO;ovBest.textContent=bestLine();
-    menuBtns.append(mkBtn("START",startGame),mkBtn("BEÁLLÍTÁSOK",()=>openSettings("main")));
-  }else if(kind==="pause"){
-    ovTitle.textContent="SZÜNET";ovText.innerHTML=st();ovBest.textContent=bestLine();
-    menuBtns.append(mkBtn("FOLYTATÁS",resumeGame),mkBtn("ÚJRAKEZDÉS",startGame),
-      mkBtn("BEÁLLÍTÁSOK",()=>openSettings("pause")),mkBtn("FŐMENÜ",toMainMenu));
-  }else if(kind==="over"){
-    ovTitle.innerHTML=overReason==="time"?"IDŐ<br>LEJÁRT":"GAME<br>OVER";ovText.innerHTML=st();ovBest.textContent=bestLine(nb);
-    menuBtns.append(mkBtn("ÚJRA",startGame),mkBtn("BEÁLLÍTÁSOK",()=>openSettings("over")),mkBtn("FŐMENÜ",toMainMenu));
+function slotCard(i){
+  const s=slots[i],b=document.createElement("button");
+  b.className="slotcard"+(s?"":" empty");
+  if(!s){
+    b.innerHTML='<div class="num">'+(i+1)+'</div><div class="nm">ÜRES SLOT</div><div class="ln">Kattints egy új profil létrehozásához.</div>';
   }else{
-    ovTitle.textContent="BEÁLLÍTÁSOK";syncSettingsUI();
+    let h='<div class="num">'+(i+1)+'</div><div class="nm">'+s.name+'</div>'+
+      '<div class="ln">REKORD: <b>'+fmt(s.stats.best)+'</b><br>KACSA: '+fmt(s.stats.ducks)+'<br>JÁTÉK: '+s.stats.games+'</div>';
+    if(s.run)h+='<div class="run">MENTETT JÁTÉK<br>'+fmt(s.run.score)+' PONT • '+DN[s.run.diff]+'</div>';
+    b.innerHTML=h;
+  }
+  b.onclick=()=>{
+    b.blur();
+    if(!slots[i]){slots[i]=newSlot(i);saveSlots()}
+    cur=i;applySlot();showMenu("slotmenu");
+  };
+  return b;
+}
+function diffCard(k,title,desc,last){
+  const b=document.createElement("button");
+  b.className="diffcard"+(last?" last":"");
+  b.innerHTML='<div class="dn '+k+'">'+title+'</div><div class="ln">'+desc+'</div>'+(last?'<div class="run">LEGUTÓBB EZT VÁLASZTOTTAD</div>':'');
+  b.onclick=()=>{
+    b.blur();
+    difficulty.value=k;
+    const s=S();if(s){s.settings.diff=k;saveSlots()}
+    startGame(null);
+  };
+  return b;
+}
+function showMenu(kind,nb){
+  menuKind=kind;releaseLock();
+  const inTitle=state==="menu";
+  overlay.classList.toggle("title",inTitle);
+  document.body.classList.toggle("titlemode",inTitle);
+  panel.classList.toggle("plain",kind==="title");
+  panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help");
+  settingsEl.style.display=kind==="settings"?"block":"none";
+  ovHint.style.display="none";
+  ovHint.innerHTML=document.body.classList.contains("touch")?HINT_TOUCH:HINT_KB;
+  screenBody.innerHTML="";menuBtns.innerHTML="";ovText.innerHTML="";
+  ovBest.textContent=menuNote;menuNote="";
+  menuBack=null;
+  const s=S();
+  const stat=()=>"Pontszám: <b>"+fmt(score)+"</b> • Kacsa: <b>"+kills+"</b> • "+DN[difficulty.value];
+  if(kind==="title"){
+    ovTitle.innerHTML="DUCK <br>FLIGHT";
+    ovText.textContent="FLIGHT FRENZY  •  1991";
+    const bestAll=Math.max(0,...slots.map(x=>x?x.stats.best:0));
+    ovBest.textContent=bestAll>0?"LEGJOBB EREDMÉNY: "+fmt(bestAll):"";
+    ovHint.style.display="";
+    menuBtns.append(mkBtn("JÁTÉK",()=>showMenu("slots")),mkBtn("HOGYAN KELL JÁTSZANI?",()=>showMenu("help")));
+  }else if(kind==="slots"){
+    ovTitle.textContent="MENTÉSI HELYEK";
+    ovText.textContent="Válassz egy slotot. Minden slot külön tárolja a beállításaidat, a rekordjaidat és a félbehagyott játékodat.";
+    const wrap=document.createElement("div");wrap.className="slots";
+    for(let i=0;i<3;i++)wrap.append(slotCard(i));
+    screenBody.append(wrap);
+    if(!storageOK)ovBest.textContent="A böngésző nem engedi a tartós mentést – a slotok csak addig maradnak meg, amíg ez az oldal nyitva van.";
+    menuBtns.append(mkBtn("VISSZA",()=>showMenu("title")));
+    menuBack=()=>showMenu("title");
+  }else if(kind==="slotmenu"&&s){
+    ovTitle.textContent="SLOT "+(cur+1);
+    ovText.innerHTML="REKORD: <b>"+fmt(s.stats.best)+"</b> • KACSA: <b>"+fmt(s.stats.ducks)+"</b> • JÁTÉK: <b>"+s.stats.games+"</b>"+
+      (s.run?"<br>MENTETT JÁTÉK: <b>"+fmt(s.run.score)+"</b> pont • <b>"+s.run.kills+"</b> kacsa • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> hátra":"");
+    if(s.run)menuBtns.append(mkBtn("FOLYTATÁS",()=>startGame(s.run)));
+    menuBtns.append(
+      mkBtn("ÚJ JÁTÉK",()=>{diffFrom="slotmenu";showMenu("difficulty")}),
+      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="slotmenu";showMenu("settings")}),
+      mkBtn("SLOT TÖRLÉSE",()=>showMenu("confirmDelete")),
+      mkBtn("VISSZA",()=>showMenu("slots")));
+    menuBack=()=>showMenu("slots");
+  }else if(kind==="difficulty"){
+    ovTitle.textContent="NEHÉZSÉG";
+    ovText.innerHTML="Milyen nehézségen akarod tolni a játékot?<br>Mindegyiken <b>1 perced</b> van, és minden <b>10</b> kacsa <b>+15 mp</b>-et ad.";
+    const last=s?s.settings.diff:"normal";
+    const wrap=document.createElement("div");wrap.className="diffs";
+    wrap.append(
+      diffCard("easy","KÖNNYŰ","Lassú, kiszámítható kacsák.<br>Egyszerre legfeljebb 2.",last==="easy"),
+      diffCard("normal","NORMÁL","Változatos repülési pályák.<br>Egyszerre legfeljebb 3.",last==="normal"),
+      diffCard("extreme","EXTRÉM","Gyors, őrült manőverek.<br>Legfeljebb 4 kacsa, extra pontok!",last==="extreme"));
+    screenBody.append(wrap);
+    menuBtns.append(mkBtn("VISSZA",()=>showMenu(diffFrom)));
+    menuBack=()=>showMenu(diffFrom);
+  }else if(kind==="settings"){
+    ovTitle.textContent="BEÁLLÍTÁSOK";
+    ovText.textContent="SLOT "+(cur+1)+" • a beállítások slotonként mentődnek";
+    syncSettingsUI();
     menuBtns.append(mkBtn("VISSZA",()=>showMenu(settingsFrom)));
+    menuBack=()=>showMenu(settingsFrom);
+  }else if(kind==="help"){
+    ovTitle.textContent="SEGÍTSÉG";
+    const d=document.createElement("div");d.className="help";d.innerHTML=HELP;screenBody.append(d);
+    menuBtns.append(mkBtn("VISSZA",()=>showMenu("title")));
+    menuBack=()=>showMenu("title");
+  }else if(kind==="pause"){
+    ovTitle.textContent="SZÜNET";
+    ovText.innerHTML=stat()+(s?" • SLOT "+(cur+1):"");
+    ovHint.style.display="";
+    menuBtns.append(
+      mkBtn("FOLYTATÁS",resumeGame),
+      mkBtn("MENTÉS",()=>{menuNote=saveRun()?"MENTVE: SLOT "+(cur+1):"NEM SIKERÜLT A MENTÉS";showMenu("pause")}),
+      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="pause";showMenu("settings")}),
+      mkBtn("ÚJRAKEZDÉS",()=>{diffFrom="pause";showMenu("difficulty")}),
+      mkBtn("FŐMENÜ",()=>runDirty?showMenu("confirmExit"):toTitle()));
+    menuBack=resumeGame;
+  }else if(kind==="confirmExit"){
+    ovTitle.textContent="KILÉPÉS";
+    ovText.innerHTML="Mentés nélkül a félbehagyott játékod <b>elvész</b>.";
+    menuBtns.append(
+      mkBtn("MENTÉS ÉS KILÉPÉS",()=>{saveRun();toTitle()}),
+      mkBtn("KILÉPÉS MENTÉS NÉLKÜL",toTitle),
+      mkBtn("MÉGSEM",()=>showMenu("pause")));
+    menuBack=()=>showMenu("pause");
+  }else if(kind==="confirmDelete"){
+    ovTitle.textContent="SLOT TÖRLÉSE";
+    ovText.innerHTML="Biztosan törlöd a(z) <b>SLOT "+(cur+1)+"</b> minden adatát (rekordok, beállítások, mentett játék)? Ez nem vonható vissza.";
+    menuBtns.append(
+      mkBtn("IGEN, TÖRLÉS",()=>{slots[cur]=null;saveSlots();cur=-1;showMenu("slots")}),
+      mkBtn("MÉGSEM",()=>showMenu("slotmenu")));
+    menuBack=()=>showMenu("slotmenu");
+  }else if(kind==="over"){
+    ovTitle.innerHTML=overReason==="time"?"IDŐ <br>LEJÁRT":"GAME <br>OVER";
+    ovText.innerHTML=stat();
+    ovBest.textContent=s?((nb?"ÚJ REKORD: ":"REKORD: ")+fmt(s.stats.best)):"";
+    menuBtns.append(
+      mkBtn("ÚJRA",()=>{diffFrom="over";showMenu("difficulty")}),
+      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="over";showMenu("settings")}),
+      mkBtn("FŐMENÜ",toTitle));
   }
   overlay.style.display="flex";
 }
-function syncSettingsUI(){
-  diffSeg.querySelectorAll(".segbtn").forEach(b=>b.classList.toggle("on",b.dataset.v===difficulty.value));
-  diffDesc.textContent=DIFF_DESC[difficulty.value];
-  sensEl.value=sens;sensVal.textContent=sens.toFixed(1)+"×";
-}
-diffSeg.addEventListener("click",e=>{
-  const b=e.target.closest(".segbtn");if(!b)return;
-  difficulty.value=b.dataset.v;saveSettings();syncSettingsUI();b.blur();
+function syncSettingsUI(){sensEl.value=sens;sensVal.textContent=sens.toFixed(1)+"×"}
+sensEl.addEventListener("input",()=>{
+  sens=parseFloat(sensEl.value);sensVal.textContent=sens.toFixed(1)+"×";
+  const s=S();if(s){s.settings.sens=sens;saveSlots()}
 });
-sensEl.addEventListener("input",()=>{sens=parseFloat(sensEl.value);sensVal.textContent=sens.toFixed(1)+"×";saveSettings()});
+
 function update(dt){
   time+=dt;
   screenFlash=Math.max(0,screenFlash-dt);
@@ -1052,9 +1376,9 @@ function render(){
 
 let last=performance.now();
 function loop(now){
-  const dt=Math.min(.033,(now-last)/1000);last=now;
+  const dt=Math.max(0,Math.min(.033,(now-last)/1000));last=now;
   if(!paused){if(hitstop>0)hitstop-=dt;else update(dt)}
-  render();
+  if(state==="menu")renderTitle();else render();
   requestAnimationFrame(loop);
 }
 
@@ -1065,10 +1389,15 @@ function setMouse(e){
   mouse.x=(e.clientX-r.left)*VW/r.width;mouse.y=(e.clientY-r.top)*H/r.height;
   touchMode=e.pointerType==="touch";
 }
-const coarse=matchMedia("(pointer:coarse)").matches;
+/* Bemenet-típus: érintés vagy egér (hibrid eszközön – pl. érintőképernyős laptop, iPad billentyűzettel – menet közben vált) */
+let lastPType=matchMedia("(pointer:coarse)").matches?"touch":"mouse";
+function setInputMode(t){lastPType=t;document.body.classList.toggle("touch",t==="touch")}
+setInputMode(lastPType);
+addEventListener("pointerdown",e=>setInputMode(e.pointerType==="touch"?"touch":"mouse"),true);
+addEventListener("pointermove",e=>{if(e.pointerType==="mouse"&&lastPType==="touch")setInputMode("mouse")},true);
 /* Egérzár: csak így lehet a kurzor sebességét (érzékenység) állítani, és nem tud kimenni az ablakból */
 function lock(){
-  if(coarse||!canvas.requestPointerLock||document.pointerLockElement===canvas)return;
+  if(lastPType==="touch"||!canvas.requestPointerLock||document.pointerLockElement===canvas)return;
   try{const p=canvas.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}catch(e){}
 }
 function releaseLock(){if(document.pointerLockElement===canvas)document.exitPointerLock()}
@@ -1105,11 +1434,10 @@ addEventListener("keydown",e=>{
   if(e.key==="Escape"){
     if(performance.now()-lastLockLoss<250)return;     // ugyanaz az ESC már kilépett az egérzárból
     if(state==="play"&&!paused)openPause();
-    else if(menuKind==="settings")showMenu(settingsFrom);
-    else if(menuKind==="pause")resumeGame();
+    else if(menuBack)menuBack();
   }
 });
-const portraitMQ=matchMedia("(orientation:portrait) and (pointer:coarse)");
+const portraitMQ=matchMedia("(orientation:portrait)");
 function checkPortrait(){if(portraitMQ.matches)openPause()}
 function doReload(){if(state==="play"&&!paused&&ammo<3){reloadTimer=0;reload();showToast("ÚJRATÖLTÉS")}}
 menuBtn.onclick=()=>{menuBtn.blur();openPause()};
@@ -1127,7 +1455,7 @@ addEventListener("orientationchange",()=>setTimeout(()=>{resize();checkPortrait(
 resize();
 mouse.x=VW/2;mouse.y=H/2;
 dog.x=dogSpot().x;
-showMenu("main");
+showMenu("title");
 updateHUD();
 requestAnimationFrame(loop);
 </script>
