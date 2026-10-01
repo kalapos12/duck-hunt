@@ -1,0 +1,23 @@
+{
+  "name": "duck-hunt",
+  "version": "1.0.0",
+  "description": "Duck Hunt: Flight Frenzy - A retro-style duck hunting game",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "lint": "npx prettier --check index.html"
+  },
+  "keywords": [
+    "game",
+    "duck-hunt",
+    "retro"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.0"
+  }
+}
