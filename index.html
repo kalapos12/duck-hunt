@@ -225,24 +225,24 @@ body.touch #titleArt{filter:none}
 <canvas id="game"></canvas>
 
 <div id="hud">
-  <div class="card"><div class="label">ÉLET</div><div id="hearts"></div></div>
-  <div class="card" id="timeCard"><div class="label">IDŐ</div><div class="value" id="timer">1:00</div></div>
-  <div class="card"><div class="label">PONT</div><div class="value" id="score">0</div></div>
-  <div class="card"><div class="label">LÁNC</div><div class="value" id="combo">0×</div></div>
-  <div class="card"><div class="label">KACSA</div><div class="value" id="ducks">0</div></div>
+  <div class="card"><div class="label" data-en="LIFE">ÉLET</div><div id="hearts"></div></div>
+  <div class="card" id="timeCard"><div class="label" data-en="TIME">IDŐ</div><div class="value" id="timer">1:00</div></div>
+  <div class="card"><div class="label" data-en="SCORE">PONT</div><div class="value" id="score">0</div></div>
+  <div class="card"><div class="label" data-en="COMBO">LÁNC</div><div class="value" id="combo">0×</div></div>
+  <div class="card"><div class="label" data-en="DUCKS">KACSA</div><div class="value" id="ducks">0</div></div>
   <div class="card" id="coinCard"><div class="label">COIN</div><div class="value" id="coins">0</div></div>
-  <div class="card" id="shellCard"><div class="label">LŐSZER</div><div id="shells"></div></div>
-  <div class="card ready" id="dogCard"><div class="label">KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
+  <div class="card" id="shellCard"><div class="label" data-en="AMMO">LŐSZER</div><div id="shells"></div></div>
+  <div class="card ready" id="dogCard"><div class="label" data-en='DOG<span class="kb"> [Q]</span>'>KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
-<div id="controls"><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn">MENÜ</button></div>
+<div id="controls"><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn" data-en="MENU">MENÜ</button></div>
 
 <div id="toast"></div>
 <div id="hurt"></div>
 <div id="crt"></div>
-<button class="btn" id="reloadBtn">ÚJRA-<br>TÖLT</button>
-<button class="btn" id="dogBtn">KUTYA</button>
-<div id="rotate">FORGASD FEKVŐ<br>HELYZETBE<br>A KÉSZÜLÉKET!</div>
+<button class="btn" id="reloadBtn" data-en="RE-<br>LOAD">ÚJRA-<br>TÖLT</button>
+<button class="btn" id="dogBtn" data-en="DOG">KUTYA</button>
+<div id="rotate" data-en="ROTATE YOUR<br>DEVICE TO<br>LANDSCAPE!">FORGASD FEKVŐ<br>HELYZETBE<br>A KÉSZÜLÉKET!</div>
 
 <div id="start">
   <div class="panel">
@@ -250,21 +250,25 @@ body.touch #titleArt{filter:none}
     <p id="ovText"></p>
     <div id="screenBody"></div>
     <div id="settings">
+      <div class="setrow">
+        <div class="setlabel">NYELV / LANGUAGE</div>
+        <div class="seg" id="langSeg"><button class="segbtn" data-v="hu">MAGYAR</button><button class="segbtn" data-v="en">ENGLISH</button></div>
+      </div>
       <div class="setrow deskonly">
-        <div class="setlabel"><span>ÉRZÉKENYSÉG</span><span id="sensVal">1.0×</span></div>
+        <div class="setlabel"><span data-en="SENSITIVITY">ÉRZÉKENYSÉG</span><span id="sensVal">1.0×</span></div>
         <input type="range" id="sens" min="0.3" max="3" step="0.1" value="1">
-        <div class="setdesc">Az egér sebessége célzáskor. Játék közben az egér le van zárva a játékba, az ESC kilép belőle és megnyitja a menüt.</div>
+        <div class="setdesc" data-en="Mouse speed while aiming. During play the mouse is locked into the game; ESC releases it and opens the menu.">Az egér sebessége célzáskor. Játék közben az egér le van zárva a játékba, az ESC kilép belőle és megnyitja a menüt.</div>
       </div>
       <div class="setrow">
-        <div class="setlabel"><span>ZENE</span><span id="musVal">60%</span></div>
+        <div class="setlabel"><span data-en="MUSIC">ZENE</span><span id="musVal">60%</span></div>
         <input type="range" id="musEl" min="0" max="1" step="0.05" value="0.6">
       </div>
       <div class="setrow">
-        <div class="setlabel"><span>HANGEFFEKTEK</span><span id="sfxVal">80%</span></div>
+        <div class="setlabel"><span data-en="SOUND FX">HANGEFFEKTEK</span><span id="sfxVal">80%</span></div>
         <input type="range" id="sfxEl" min="0" max="1" step="0.05" value="0.8">
-        <div class="setdesc">Játék közben az M billentyűvel vagy a HANG gombbal is lehet némítani. A hang beállítása minden slotra közös.</div>
+        <div class="setdesc" data-en="Press M or the SOUND button during play to mute. Sound settings are shared by all slots.">Játék közben az M billentyűvel vagy a HANG gombbal is lehet némítani. A hang beállítása minden slotra közös.</div>
       </div>
-      <div class="setrow" id="fsRow"><button class="btn" id="fsBtn">TELJES KÉPERNYŐ</button></div>
+      <div class="setrow" id="fsRow"><button class="btn" id="fsBtn" data-en="FULLSCREEN">TELJES KÉPERNYŐ</button></div>
     </div>
     <div id="ovBest"></div>
     <div class="menu" id="menuBtns"></div>
@@ -275,6 +279,15 @@ body.touch #titleArt{filter:none}
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
+let LANG=(()=>{try{const v=localStorage.getItem("dfLang");if(v==="hu"||v==="en")return v}catch(e){}return(navigator.language||"hu").toLowerCase().startsWith("hu")?"hu":"en"})();
+const T=(hu,en)=>LANG==="en"?en:hu;
+function applyLangStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll("[data-en]").forEach(el=>{
+    if(el.dataset.hu===undefined)el.dataset.hu=el.innerHTML;
+    el.innerHTML=LANG==="en"?el.dataset.en:el.dataset.hu;
+  });
+}
 const canvas=$("game"),ctx=canvas.getContext("2d");
 const scoreEl=$("score"),coinsEl=$("coins"),comboEl=$("combo"),ducksEl=$("ducks"),heartsEl=$("hearts"),shellsEl=$("shells"),
       overlay=$("start"),
@@ -401,6 +414,8 @@ function makeGun(k){
 }
 function gunImg(id){return GUN_CACHE[id]||(GUN_CACHE[id]=makeGun(SKINS.find(k=>k.id===id)||SKINS[0]))}
 let skinId="classic";
+const SKN_EN={classic:"CLASSIC",gold:"GOLD",neon:"NEON",pink:"PINK",camo:"CAMO",fire:"FIRE",ice:"ICE",stealth:"STEALTH",emerald:"EMERALD",amethyst:"AMETHYST",rainbow:"RAINBOW"};
+const skinName=k=>LANG==="en"?SKN_EN[k.id]:k.name;
 const GUN_LEN=44;
 
 function makeCloud(bumps,w,h){
@@ -730,7 +745,7 @@ for(let i=0;i<3;i++){
 function drawHeart(c,full){const g=c.getContext("2d");g.clearRect(0,0,11,10);g.drawImage(full?HEART_F:HEART_E,0,0)}
 function updateHUD(){
   updateTimerHUD();
-  scoreEl.textContent=score.toLocaleString("hu-HU");
+  scoreEl.textContent=fmt(score);
   comboEl.textContent=combo+"×";ducksEl.textContent=kills;
   coinsEl.textContent=fmt(S()?S().coins:0);
   heartEls.forEach((c,i)=>{
@@ -950,9 +965,9 @@ function pickTarget(){
 }
 function callDog(){
   if(state!=="play"||paused)return;
-  if(dog.mode==="fetch"||dog.mode==="pick"){showToast("A KUTYA DOLGOZIK!","#94b0c2");return}
-  if(dog.cd>0){showToast("A KUTYA PIHEN…  "+Math.ceil(dog.cd)+" MP","#94b0c2");return}
-  if(!lying.length){showToast("NINCS KACSA A FÜVÖN!","#94b0c2");return}
+  if(dog.mode==="fetch"||dog.mode==="pick"){showToast(T("A KUTYA DOLGOZIK!","THE DOG IS WORKING!"),"#94b0c2");return}
+  if(dog.cd>0){showToast(T("A KUTYA PIHEN…  ","THE DOG IS RESTING…  ")+Math.ceil(dog.cd)+T(" MP"," S"),"#94b0c2");return}
+  if(!lying.length){showToast(T("NINCS KACSA A FÜVÖN!","NO DUCKS IN THE GRASS!"),"#94b0c2");return}
   dog.cd=DOG_CD;dog.alert=.6;Snd.bark(2);dog.carry=false;dog.rt=null;dog.sniff=0;
   pickTarget();updateDogHUD();
 }
@@ -962,7 +977,7 @@ function dogGrab(){
     lying.splice(i,1);Snd.bark(1);
     score+=l.pts;dog.carry=true;                                // a kacsa pontja duplázódik
     pop("×2  +"+l.pts,dog.x,dog.y-30,"#ffe066");
-    showToast("APORT!  KACSA ×2  +"+l.pts,"#ffe066");
+    showToast(T("APORT!  KACSA ×2  +","FETCH!  DUCK ×2  +")+l.pts,"#ffe066");
     for(let n=0;n<14;n++)P({x:l.x,y:l.y,vx:rand(-45,45),vy:-rand(20,70),life:rand(.4,.9),
       c:pick(["#f4f4f4","#b06a30","#ffe066"]),s:pick([1,2]),g:120,dr:1});
     updateHUD();
@@ -996,7 +1011,7 @@ function updateDog(dt){
       dog.mode=dog.cd>0?"roam":"ready";dog.rt=null;dog.sniff=.5;
     }
   }else if(m==="roam"){
-    if(dog.cd<=0){dog.mode="return";Snd.ding();showToast("A KUTYA KÉSZEN ÁLL!"+(lastPType==="touch"?"":"  [Q]"),"#a7f070");return}
+    if(dog.cd<=0){dog.mode="return";Snd.ding();showToast(T("A KUTYA KÉSZEN ÁLL!","THE DOG IS READY!")+(lastPType==="touch"?"":"  [Q]"),"#a7f070");return}
     if(dog.sniff>0)dog.sniff-=dt;
     else{
       if(!dog.rt)dog.rt={x:rand(16,VW-16),y:rand(GY+40,H-14)};
@@ -1007,9 +1022,9 @@ function updateDog(dt){
 let dogTxt="";
 function updateDogHUD(){
   const busy=dog.mode==="fetch"||dog.mode==="pick";
-  const txt=busy?"APORT!":dog.cd>0?Math.ceil(dog.cd)+" MP":"KÉSZ";
+  const rdy=!busy&&dog.cd<=0,txt=busy?T("APORT!","FETCH!"):dog.cd>0?Math.ceil(dog.cd)+T(" MP"," S"):T("KÉSZ","READY");
   if(txt===dogTxt)return;
-  dogTxt=txt;dogVal.textContent=txt;dogCard.classList.toggle("ready",txt==="KÉSZ");
+  dogTxt=txt;dogVal.textContent=txt;dogCard.classList.toggle("ready",rdy);
 }
 
 /* ====== Lövés ====== */
@@ -1049,11 +1064,11 @@ function killDuck(i){
   {const cn=COIN[difficulty.value]||5,sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
    pop("+"+cn+" COIN",d.x,d.y+22,"#ffcd75");setTimeout(Snd.coin,160)}
   hitstop=.06;screenFlash=.06;
-  const bonus=kills%BONUS_EVERY===0,msg=pick(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"])+"  +"+pts;
+  const bonus=kills%BONUS_EVERY===0,msg=pick(T(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"],["BANG!","CLEAN SHOT!","NAILED IT!","BRILLIANT!","PERFECT!"]))+"  +"+pts;
   if(bonus){
     timeLeft+=BONUS_TIME;setTimeout(Snd.bonus,250);
-    showToast("+"+BONUS_TIME+" MP IDŐ!  "+msg,"#a7f070");
-    pop("+"+BONUS_TIME+" MP",d.x,d.y+8,"#a7f070");
+    showToast("+"+BONUS_TIME+T(" MP IDŐ!  "," S TIME!  ")+msg,"#a7f070");
+    pop("+"+BONUS_TIME+T(" MP"," S"),d.x,d.y+8,"#a7f070");
     timeCard.classList.add("bonus");setTimeout(()=>timeCard.classList.remove("bonus"),700);
   }else showToast(msg);
   pop("+"+pts,d.x,d.y-8);
@@ -1082,7 +1097,7 @@ function miss(mx,my){
   for(let i=0;i<3;i++)P({x:mx,y:my,vx:rand(-8,8),vy:-rand(6,16),life:rand(.4,.7),c:"#c8ccd8",s:2,sm:true});
   hp=Math.max(0,hp-1);
   hurtEl.classList.remove("go");void hurtEl.offsetWidth;hurtEl.classList.add("go");
-  showToast(hp>0?"MELLÉ!  -1 SZÍV":"ELFOGYTAK A SZÍVEID!","#ff6a6a");
+  showToast(hp>0?T("MELLÉ!  -1 SZÍV","MISS!  -1 HEART"):T("ELFOGYTAK A SZÍVEID!","YOU RAN OUT OF HEARTS!"),"#ff6a6a");
   if(hp<=0){Snd.over();overReason="hp";state="over";overTimer=1.1;reloadTimer=0}
 }
 function reload(){ammo=3;pumpT=.3;Snd.pump();updateHUD()}
@@ -1111,7 +1126,7 @@ function startGame(run){
     updateHUD();
   }
   state="play";runDirty=!!run;Snd.start();
-  showToast(run?"FOLYTATÁS!":"VADÁSZAT INDUL!");
+  showToast(run?T("FOLYTATÁS!","CONTINUING!"):T("VADÁSZAT INDUL!","THE HUNT BEGINS!"));
   spawnDuck();spawnDuck();
   lock();
 }
@@ -1160,8 +1175,8 @@ function miniRemain(){const s=S();return s?Math.max(0,(s.miniAt||0)+MINI_CD-Date
 function fmtCd(ms){const t=Math.ceil(ms/1000);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
 function startMini(){
   const s=S();if(!s)return;
-  if(miniRemain()>0){menuNote="MÉG "+fmtCd(miniRemain())+" PERC, MIRE ÚJRA JÁTSZHATSZ";Snd.deny();showMenu("minimenu");return}
-  if(s.coins<MINI_COST){menuNote="NINCS ELÉG COIN – A BELÉPŐ "+MINI_COST+" COIN";Snd.deny();showMenu("minimenu");return}
+  if(miniRemain()>0){menuNote=T("MÉG "+fmtCd(miniRemain())+" PERC, MIRE ÚJRA JÁTSZHATSZ","YOU CAN PLAY AGAIN IN "+fmtCd(miniRemain()));Snd.deny();showMenu("minimenu");return}
+  if(s.coins<MINI_COST){menuNote=T("NINCS ELÉG COIN – A BELÉPŐ "+MINI_COST+" COIN","NOT ENOUGH COINS – ENTRY IS "+MINI_COST+" COIN");Snd.deny();showMenu("minimenu");return}
   s.coins-=MINI_COST;s.miniAt=Date.now();saveSlots();
   hideMenu();resetRun();ammo=3;
   const pr=MINI_PRIZES.slice();
@@ -1170,7 +1185,7 @@ function startMini(){
     const sp=rand(26,46),an=rand(0,Math.PI*2);
     return{x:rand(30,VW-30),y:rand(26,GY-26),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp*.6,prize:p,face:1,t:rand(0,5),ph:rand(0,6.28),dead:false};
   })};
-  state="mini";updateHUD();Snd.start();showToast("VÁLASSZ EGY KACSÁT!");lock();
+  state="mini";updateHUD();Snd.start();showToast(T("VÁLASSZ EGY KACSÁT!","PICK A DUCK!"));lock();
 }
 function updateMini(dt){
   mini.t+=dt;
@@ -1208,8 +1223,8 @@ function miniHit(mx,my){
   if(!hit){
     for(let i=0;i<10;i++){const a=rand(0,6.28),sp=rand(25,80);P({x:mx,y:my,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(.25,.5),c:pick(["#ffffff","#ffe066","#ffa020"]),s:pick([1,2]),g:60,dr:1.5})}
     Snd.miss();
-    if(ammo<=0){mini.prize=0;mini.phase="reveal";mini.rt=2.4;showToast("ELFOGYTAK A LÖVÉSEK!  0 COIN","#ff6a6a")}
-    else showToast("MELLÉ!  MÉG "+ammo+" LÖVÉSED VAN","#ff6a6a");
+    if(ammo<=0){mini.prize=0;mini.phase="reveal";mini.rt=2.4;showToast(T("ELFOGYTAK A LÖVÉSEK!  0 COIN","OUT OF SHOTS!  0 COIN"),"#ff6a6a")}
+    else showToast(T("MELLÉ!  MÉG "+ammo+" LÖVÉSED VAN","MISS!  "+ammo+" SHOTS LEFT"),"#ff6a6a");
     return;
   }
   hit.dead=true;hit.vy=-35;hit.vx*=.2;
@@ -1219,7 +1234,7 @@ function miniHit(mx,my){
   updateHUD();Snd.hit();Snd.fall();hitstop=.06;screenFlash=.06;
   for(let n=0;n<22;n++){const a=rand(0,6.28),sp=rand(20,90);
     P({x:hit.x,y:hit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-20,life:rand(.5,1.1),c:pick(["#b06a30","#73401c","#f4f4f4","#38b764","#e8b878"]),s:pick([1,2,2]),g:90,dr:1.2})}
-  if(p===0){Snd.deny();showToast("ÜRES KACSA…  0 COIN","#94a8bc");pop("0 COIN",hit.x,hit.y-10,"#94a8bc")}
+  if(p===0){Snd.deny();showToast(T("ÜRES KACSA…  0 COIN","EMPTY DUCK…  0 COIN"),"#94a8bc");pop("0 COIN",hit.x,hit.y-10,"#94a8bc")}
   else{
     [0,110,220].slice(0,p>=500?3:p>=150?3:p>=100?2:1).forEach(t=>setTimeout(Snd.coin,t+150));
     pop("+"+p+" COIN",hit.x,hit.y-10,"#ffe066");
@@ -1242,7 +1257,7 @@ function normSlot(s){
   if(!s.owned.includes(s.skin))s.skin="classic";
   return s;
 }
-const DN={easy:"KÖNNYŰ",normal:"NORMÁL",extreme:"EXTRÉM"};
+const DN={get easy(){return T("KÖNNYŰ","EASY")},get normal(){return T("NORMÁL","NORMAL")},get extreme(){return T("EXTRÉM","EXTREME")}};
 let slots=[null,null,null],cur=-1,storageOK=true,menuNote="",menuBack=null,menuKind="title",storeFrom="slotmenu",settingsFrom="slotmenu",diffFrom="slotmenu";
 try{
   localStorage.setItem("dfTest","1");localStorage.removeItem("dfTest");
@@ -1267,12 +1282,12 @@ function saveRun(){
   s.run={diff:difficulty.value,score,combo,kills,ammo,hp,timeLeft,dogCd:dog.cd,at:Date.now()};
   s.played=Date.now();saveSlots();runDirty=false;return true;
 }
-const fmt=n=>(+n||0).toLocaleString("hu-HU");
+const fmt=n=>(+n||0).toLocaleString(T("hu-HU","en-US"));
 
 /* ====== Menük ====== */
-const HINT_KB="KATT = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ";
-const HINT_TOUCH="ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; ÚJRATÖLT. ÉS KUTYA GOMB &nbsp;•&nbsp; MENÜ GOMB";
-const HELP=
+const hintKb=()=>T("KATT = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ","CLICK = SHOOT &nbsp;•&nbsp; R = RELOAD &nbsp;•&nbsp; Q = DOG &nbsp;•&nbsp; ESC = MENU");
+const hintTouch=()=>T("ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; ÚJRATÖLT. ÉS KUTYA GOMB &nbsp;•&nbsp; MENÜ GOMB","TAP = SHOOT &nbsp;•&nbsp; RELOAD AND DOG BUTTONS &nbsp;•&nbsp; MENU BUTTON");
+const helpText=()=>T(
  "<p><b>CÉL:</b> lődd le a repülő kacsákat, amíg le nem jár az idő, vagy el nem fogynak a szíveid.</p>"+
  "<p><b>GÉP:</b> egér = célzás • bal klikk = lövés • R = újratöltés • Q = kutya • ESC = menü.</p>"+
  "<p><b>TELEFON:</b> érintsd meg, ahova lőni akarsz • jobb lent az ÚJRATÖLT. és a KUTYA gomb • jobb fent a MENÜ. Fekvő helyzetben játssz!</p>"+
@@ -1280,7 +1295,17 @@ const HELP=
  "<p><b>SZÍVEK:</b> 3 szíved van, minden mellélövés elvesz egyet.</p>"+
  "<p><b>IDŐ:</b> 1 perccel indulsz, minden 10. lelőtt kacsa +15 másodpercet ad. Közben telik a nap: nappal, naplemente, éjszaka.</p>"+
  "<p><b>KUTYA:</b> a lelőtt kacsák a fűben maradnak. Ha megnyomod a Q-t, a kutya összeszedi őket, és a pontjuk megduplázódik. 30 másodpercenként használhatod.</p>"+
- "<p><b>MENTÉS:</b> a szünet menüben a MENTÉS gombbal a félbehagyott játékot a slotodba teheted, és később onnan folytathatod.</p>";
+ "<p><b>COIN:</b> minden lelőtt kacsáért coin jár (könnyű 2, normál 5, extrém 7). A SKIN BOLTBAN skinekre költheted (2000/db), vagy a SZERENCSE JÁTÉKBAN kockáztathatsz 100 coint (20 percenként).</p>"+
+ "<p><b>MENTÉS:</b> a szünet menüben a MENTÉS gombbal a félbehagyott játékot a slotodba teheted, és később onnan folytathatod.</p>",
+ "<p><b>GOAL:</b> shoot the flying ducks before time runs out or you lose all your hearts.</p>"+
+ "<p><b>PC:</b> mouse = aim • left click = shoot • R = reload • Q = dog • ESC = menu.</p>"+
+ "<p><b>PHONE:</b> tap where you want to shoot • RELOAD and DOG buttons bottom right • MENU top right. Play in landscape!</p>"+
+ "<p><b>POINTS:</b> the faster, higher and more erratic the duck, the more points. Chaining hits gives an extra bonus.</p>"+
+ "<p><b>HEARTS:</b> you have 3 hearts, every missed shot costs one.</p>"+
+ "<p><b>TIME:</b> you start with 1 minute, every 10th duck adds +15 seconds. The day passes as you play: daytime, sunset, night.</p>"+
+ "<p><b>DOG:</b> downed ducks stay in the grass. Press Q and the dog fetches them, doubling their points. Usable every 30 seconds.</p>"+
+ "<p><b>COINS:</b> every duck gives coins (easy 2, normal 5, extreme 7). Spend them on skins in the SKIN SHOP (2000 each), or risk 100 coins in the LUCKY GAME (once every 20 minutes).</p>"+
+ "<p><b>SAVING:</b> use SAVE in the pause menu to put an unfinished game into your slot and continue it later.</p>");
 function mkBtn(label,fn){
   const b=document.createElement("button");b.className="btn";b.textContent=label;
   b.onclick=()=>{b.blur();fn()};return b;
@@ -1289,11 +1314,11 @@ function slotCard(i){
   const s=slots[i],b=document.createElement("button");
   b.className="slotcard"+(s?"":" empty");
   if(!s){
-    b.innerHTML='<div class="num">'+(i+1)+'</div><div class="nm">ÜRES SLOT</div><div class="ln">Kattints egy új profil létrehozásához.</div>';
+    b.innerHTML='<div class="num">'+(i+1)+'</div><div class="nm">'+T('ÜRES SLOT','EMPTY SLOT')+'</div><div class="ln">'+T('Kattints egy új profil létrehozásához.','Click to create a new profile.')+'</div>';
   }else{
     let h='<div class="num">'+(i+1)+'</div><div class="nm">'+s.name+'</div>'+
-      '<div class="ln">COIN: <b>'+fmt(s.coins)+'</b><br>REKORD: <b>'+fmt(s.stats.best)+'</b><br>KACSA: '+fmt(s.stats.ducks)+'<br>JÁTÉK: '+s.stats.games+'</div>';
-    if(s.run)h+='<div class="run">MENTETT JÁTÉK<br>'+fmt(s.run.score)+' PONT • '+DN[s.run.diff]+'</div>';
+      '<div class="ln">COIN: <b>'+fmt(s.coins)+'</b><br>'+T('REKORD','BEST')+': <b>'+fmt(s.stats.best)+'</b><br>'+T('KACSA','DUCKS')+': '+fmt(s.stats.ducks)+'<br>'+T('JÁTÉK','GAMES')+': '+s.stats.games+'</div>';
+    if(s.run)h+='<div class="run">'+T('MENTETT JÁTÉK','SAVED GAME')+'<br>'+fmt(s.run.score)+' '+T('PONT','PTS')+' • '+DN[s.run.diff]+'</div>';
     b.innerHTML=h;
   }
   b.onclick=()=>{
@@ -1306,7 +1331,7 @@ function slotCard(i){
 function diffCard(k,title,desc,last){
   const b=document.createElement("button");
   b.className="diffcard"+(last?" last":"");
-  b.innerHTML='<div class="dn '+k+'">'+title+'</div><div class="ln">'+desc+'</div>'+(last?'<div class="run">LEGUTÓBB EZT VÁLASZTOTTAD</div>':'');
+  b.innerHTML='<div class="dn '+k+'">'+title+'</div><div class="ln">'+desc+'</div>'+(last?'<div class="run">'+T('LEGUTÓBB EZT VÁLASZTOTTAD','YOUR LAST CHOICE')+'</div>':'');
   b.onclick=()=>{
     b.blur();
     difficulty.value=k;
@@ -1321,18 +1346,18 @@ function skinCard(k){
   b.className="skincard"+(eq?" eq":owned?" own":"");
   const pv=mk(54,20),g=pv.getContext("2d");g.translate(54,0);g.rotate(Math.PI/2);g.drawImage(gunImg(k.id),0,0);
   pv.className="pv";b.append(pv);
-  const nm=document.createElement("div");nm.className="nm";nm.textContent=k.name;b.append(nm);
+  const nm=document.createElement("div");nm.className="nm";nm.textContent=skinName(k);b.append(nm);
   const st=document.createElement("div");st.className="st";
-  st.textContent=eq?"FELSZERELVE":owned?"FELSZEREL":(k.id==="classic"?"ALAP":SKIN_PRICE+" COIN");
+  st.textContent=eq?T("FELSZERELVE","EQUIPPED"):owned?T("FELSZEREL","EQUIP"):(k.id==="classic"?T("ALAP","DEFAULT"):SKIN_PRICE+" COIN");
   if(!owned)st.classList.add(s.coins>=SKIN_PRICE?"can":"cant");
   b.append(st);
   b.onclick=()=>{
     b.blur();
     if(eq)return;
     if(!owned){
-      if(s.coins<SKIN_PRICE){menuNote="MÉG "+fmt(SKIN_PRICE-s.coins)+" COIN KELL A(Z) "+k.name+" SKINHEZ";Snd.deny();storeRefresh();return}
-      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote="MEGVETTED: "+k.name;
-    }else menuNote="FELSZERELVE: "+k.name;
+      if(s.coins<SKIN_PRICE){menuNote=T("MÉG "+fmt(SKIN_PRICE-s.coins)+" COIN KELL A(Z) "+skinName(k)+" SKINHEZ","YOU NEED "+fmt(SKIN_PRICE-s.coins)+" MORE COINS FOR THE "+skinName(k)+" SKIN");Snd.deny();storeRefresh();return}
+      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote=T("MEGVETTED: ","PURCHASED: ")+skinName(k);
+    }else menuNote=T("FELSZERELVE: ","EQUIPPED: ")+skinName(k);
     s.skin=k.id;skinId=k.id;saveSlots();updateHUD();storeRefresh();
   };
   return b;
@@ -1352,139 +1377,148 @@ function showMenu(kind,nb){
   panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help"||kind==="store");
   settingsEl.style.display=kind==="settings"?"block":"none";
   ovHint.style.display="none";
-  ovHint.innerHTML=document.body.classList.contains("touch")?HINT_TOUCH:HINT_KB;
+  ovHint.innerHTML=document.body.classList.contains("touch")?hintTouch():hintKb();
   screenBody.innerHTML="";menuBtns.innerHTML="";ovText.innerHTML="";
   ovBest.textContent=menuNote;menuNote="";
   menuBack=null;
   const s=S();
-  const stat=()=>"Pontszám: <b>"+fmt(score)+"</b> • Kacsa: <b>"+kills+"</b> • "+DN[difficulty.value]+" • +"+runCoins+" COIN";
+  const stat=()=>T("Pontszám","Score")+": <b>"+fmt(score)+"</b> • "+T("Kacsa","Ducks")+": <b>"+kills+"</b> • "+DN[difficulty.value]+" • +"+runCoins+" COIN";
   if(kind==="title"){
     ovTitle.innerHTML="DUCK <br>FLIGHT";
     ovText.textContent="FLIGHT FRENZY  •  1991";
     const bestAll=Math.max(0,...slots.map(x=>x?x.stats.best:0));
-    ovBest.textContent=bestAll>0?"LEGJOBB EREDMÉNY: "+fmt(bestAll):"";
+    ovBest.textContent=bestAll>0?T("LEGJOBB EREDMÉNY: ","BEST SCORE: ")+fmt(bestAll):"";
     ovHint.style.display="";
-    menuBtns.append(mkBtn("JÁTÉK",()=>showMenu("slots")),mkBtn("HOGYAN KELL JÁTSZANI?",()=>showMenu("help")));
+    menuBtns.append(mkBtn(T("JÁTÉK","PLAY"),()=>showMenu("slots")),mkBtn(T("HOGYAN KELL JÁTSZANI?","HOW TO PLAY"),()=>showMenu("help")),
+      mkBtn("LANGUAGE: "+(LANG==="en"?"ENGLISH":"MAGYAR"),()=>setLang(LANG==="en"?"hu":"en")));
   }else if(kind==="slots"){
-    ovTitle.textContent="MENTÉSI HELYEK";
-    ovText.textContent="Válassz egy slotot. Minden slot külön tárolja a beállításaidat, a rekordjaidat és a félbehagyott játékodat.";
+    ovTitle.textContent=T("MENTÉSI HELYEK","SAVE SLOTS");
+    ovText.textContent=T("Válassz egy slotot. Minden slot külön tárolja a beállításaidat, a rekordjaidat és a félbehagyott játékodat.","Pick a slot. Each slot stores its own settings, records and unfinished game.");
     const wrap=document.createElement("div");wrap.className="slots";
     for(let i=0;i<3;i++)wrap.append(slotCard(i));
     screenBody.append(wrap);
-    if(!storageOK)ovBest.textContent="A böngésző nem engedi a tartós mentést – a slotok csak addig maradnak meg, amíg ez az oldal nyitva van.";
-    menuBtns.append(mkBtn("VISSZA",()=>showMenu("title")));
+    if(!storageOK)ovBest.textContent=T("A böngésző nem engedi a tartós mentést – a slotok csak addig maradnak meg, amíg ez az oldal nyitva van.","Your browser blocks persistent saving – slots only last while this page stays open.");
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu("title")));
     menuBack=()=>showMenu("title");
   }else if(kind==="slotmenu"&&s){
     ovTitle.textContent="SLOT "+(cur+1);
-    ovText.innerHTML="COIN: <b>"+fmt(s.coins)+"</b> • REKORD: <b>"+fmt(s.stats.best)+"</b> • KACSA: <b>"+fmt(s.stats.ducks)+"</b> • JÁTÉK: <b>"+s.stats.games+"</b>"+
-      (s.run?"<br>MENTETT JÁTÉK: <b>"+fmt(s.run.score)+"</b> pont • <b>"+s.run.kills+"</b> kacsa • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> hátra":"");
-    if(s.run)menuBtns.append(mkBtn("FOLYTATÁS",()=>startGame(s.run)));
+    ovText.innerHTML="COIN: <b>"+fmt(s.coins)+"</b> • "+T("REKORD","BEST")+": <b>"+fmt(s.stats.best)+"</b> • "+T("KACSA","DUCKS")+": <b>"+fmt(s.stats.ducks)+"</b> • "+T("JÁTÉK","GAMES")+": <b>"+s.stats.games+"</b>"+
+      (s.run?"<br>"+T("MENTETT JÁTÉK","SAVED GAME")+": <b>"+fmt(s.run.score)+"</b> "+T("pont","pts")+" • <b>"+s.run.kills+"</b> "+T("kacsa","ducks")+" • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> "+T("hátra","left"):"");
+    if(s.run)menuBtns.append(mkBtn(T("FOLYTATÁS","CONTINUE"),()=>startGame(s.run)));
     menuBtns.append(
-      mkBtn("ÚJ JÁTÉK",()=>{diffFrom="slotmenu";showMenu("difficulty")}),
-      mkBtn("SZERENCSE JÁTÉK",()=>showMenu("minimenu")),
-      mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),
-      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="slotmenu";showMenu("settings")}),
-      mkBtn("SLOT TÖRLÉSE",()=>showMenu("confirmDelete")),
-      mkBtn("VISSZA",()=>showMenu("slots")));
+      mkBtn(T("ÚJ JÁTÉK","NEW GAME"),()=>{diffFrom="slotmenu";showMenu("difficulty")}),
+      mkBtn(T("SZERENCSE JÁTÉK","LUCKY GAME"),()=>showMenu("minimenu")),
+      mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="slotmenu";showMenu("store")}),
+      mkBtn(T("BEÁLLÍTÁSOK","SETTINGS"),()=>{settingsFrom="slotmenu";showMenu("settings")}),
+      mkBtn(T("SLOT TÖRLÉSE","DELETE SLOT"),()=>showMenu("confirmDelete")),
+      mkBtn(T("VISSZA","BACK"),()=>showMenu("slots")));
     menuBack=()=>showMenu("slots");
   }else if(kind==="difficulty"){
-    ovTitle.textContent="NEHÉZSÉG";
-    ovText.innerHTML="Milyen nehézségen akarod tolni a játékot?<br>Mindegyiken <b>1 perced</b> van, és minden <b>10</b> kacsa <b>+15 mp</b>-et ad.";
+    ovTitle.textContent=T("NEHÉZSÉG","DIFFICULTY");
+    ovText.innerHTML=T("Milyen nehézségen akarod tolni a játékot?<br>Mindegyiken <b>1 perced</b> van, és minden <b>10</b> kacsa <b>+15 mp</b>-et ad.","Which difficulty do you want to play on?<br>On every level you get <b>1 minute</b>, and every <b>10</b> ducks add <b>+15 s</b>.");
     const last=s?s.settings.diff:"normal";
     const wrap=document.createElement("div");wrap.className="diffs";
     wrap.append(
-      diffCard("easy","KÖNNYŰ","Lassú, kiszámítható kacsák.<br>Egyszerre legfeljebb 2.",last==="easy"),
-      diffCard("normal","NORMÁL","Változatos repülési pályák.<br>Egyszerre legfeljebb 3.",last==="normal"),
-      diffCard("extreme","EXTRÉM","Gyors, őrült manőverek.<br>Legfeljebb 4 kacsa, extra pontok!",last==="extreme"));
+      diffCard("easy",DN.easy,T("Lassú, kiszámítható kacsák.<br>Egyszerre legfeljebb 2.","Slow, predictable ducks.<br>Up to 2 at a time."),last==="easy"),
+      diffCard("normal",DN.normal,T("Változatos repülési pályák.<br>Egyszerre legfeljebb 3.","Varied flight paths.<br>Up to 3 at a time."),last==="normal"),
+      diffCard("extreme",DN.extreme,T("Gyors, őrült manőverek.<br>Legfeljebb 4 kacsa, extra pontok!","Fast, crazy maneuvers.<br>Up to 4 ducks, bonus points!"),last==="extreme"));
     screenBody.append(wrap);
-    menuBtns.append(mkBtn("VISSZA",()=>showMenu(diffFrom)));
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu(diffFrom)));
     menuBack=()=>showMenu(diffFrom);
   }else if(kind==="minimenu"&&s){
-    ovTitle.innerHTML="SZERENCSE <br>KACSA";
+    ovTitle.innerHTML=T("SZERENCSE <br>KACSA","LUCKY <br>DUCK");
     lastRemain=miniRemain();
-    ovText.innerHTML="Tíz kacsa repked a képernyőn, mindegyikben <b>titkos nyeremény</b> van. <b>Egyet</b> lőhetsz le a háromból: azt a nyereményt viszed el!"+
-      "<br><br>3 kacsa: <b>0</b> • 2 kacsa: <b>50</b> • 2 kacsa: <b>100</b> • 2 kacsa: <b>150</b> • 1 kacsa: <b>500</b> COIN"+
-      "<br><br>BELÉPŐ: <b>"+MINI_COST+" COIN</b> • EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>"+
-      "<br>"+(miniRemain()>0?"KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva":"20 PERCENKÉNT JÁTSZHATÓ – <b>MOST ELÉRHETŐ</b>");
-    menuBtns.append(mkBtn(miniRemain()>0?"VÁRAKOZÁS: "+fmtCd(miniRemain()):"INDÍTÁS ("+MINI_COST+" COIN)",startMini),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+    ovText.innerHTML=T("Tíz kacsa repked a képernyőn, mindegyikben <b>titkos nyeremény</b> van. <b>Egyet</b> lőhetsz le a háromból: azt a nyereményt viszed el!","Ten ducks flutter around the screen, each hiding a <b>secret prize</b>. You may shoot <b>one</b> of them within three shots – and you keep that prize!")+
+      "<br><br>"+T("3 kacsa: <b>0</b> • 2 kacsa: <b>50</b> • 2 kacsa: <b>100</b> • 2 kacsa: <b>150</b> • 1 kacsa: <b>500</b> COIN","3 ducks: <b>0</b> • 2 ducks: <b>50</b> • 2 ducks: <b>100</b> • 2 ducks: <b>150</b> • 1 duck: <b>500</b> COINS")+
+      "<br><br>"+T("BELÉPŐ","ENTRY")+": <b>"+MINI_COST+" COIN</b> • "+T("EGYENLEGED","BALANCE")+": <b>"+fmt(s.coins)+" COIN</b>"+
+      "<br>"+(miniRemain()>0?T("KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva","NEXT GAME IN: <b>"+fmtCd(miniRemain())+"</b>"):T("20 PERCENKÉNT JÁTSZHATÓ – <b>MOST ELÉRHETŐ</b>","PLAYABLE EVERY 20 MINUTES – <b>AVAILABLE NOW</b>"));
+    menuBtns.append(mkBtn(miniRemain()>0?T("VÁRAKOZÁS: ","WAIT: ")+fmtCd(miniRemain()):T("INDÍTÁS (","START (")+MINI_COST+" COIN)",startMini),mkBtn(T("VISSZA","BACK"),()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="minipause"){
-    ovTitle.textContent="SZÜNET";
-    ovText.innerHTML="Ha kilépsz, a belépő (<b>"+MINI_COST+" COIN</b>) elvész.";
-    menuBtns.append(mkBtn("FOLYTATÁS",resumeGame),mkBtn("KILÉPÉS",leaveMini));
+    ovTitle.textContent=T("SZÜNET","PAUSED");
+    ovText.innerHTML=T("Ha kilépsz, a belépő (<b>"+MINI_COST+" COIN</b>) elvész.","If you quit, the entry fee (<b>"+MINI_COST+" COIN</b>) is lost.");
+    menuBtns.append(mkBtn(T("FOLYTATÁS","RESUME"),resumeGame),mkBtn(T("KILÉPÉS","QUIT"),leaveMini));
     menuBack=resumeGame;
   }else if(kind==="miniover"&&s){
     const p=mini.prize||0;
-    ovTitle.innerHTML=p>=500?"JACKPOT!":p>0?"NYERTÉL!":"SAJNOS <br>NEM";
-    ovText.innerHTML=(p>0?"Nyeremény: <b>+"+p+" COIN</b>":"Üres kacsát lőttél.")+" • Belépő: -"+MINI_COST+
-      "<br>EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b><br>KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva";
-    menuBtns.append(mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+    ovTitle.innerHTML=p>=500?"JACKPOT!":p>0?T("NYERTÉL!","YOU WIN!"):T("SAJNOS <br>NEM","NO <br>LUCK");
+    ovText.innerHTML=(p>0?T("Nyeremény","Prize")+": <b>+"+p+" COIN</b>":T("Üres kacsát lőttél.","You shot an empty duck."))+" • "+T("Belépő","Entry")+": -"+MINI_COST+
+      "<br>"+T("EGYENLEGED","BALANCE")+": <b>"+fmt(s.coins)+" COIN</b><br>"+T("KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva","NEXT GAME IN: <b>"+fmtCd(miniRemain())+"</b>");
+    menuBtns.append(mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="slotmenu";showMenu("store")}),mkBtn(T("VISSZA","BACK"),()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="store"&&s){
-    ovTitle.textContent="SKIN BOLT";
-    ovText.innerHTML="EGYENLEG: <b>"+fmt(s.coins)+" COIN</b> • minden skin <b>"+SKIN_PRICE+" COIN</b><br>Coin: kacsánként KÖNNYŰ 2, NORMÁL 5, EXTRÉM 7.";
+    ovTitle.textContent=T("SKIN BOLT","SKIN SHOP");
+    ovText.innerHTML=T("EGYENLEG: <b>"+fmt(s.coins)+" COIN</b> • minden skin <b>"+SKIN_PRICE+" COIN</b><br>Coin: kacsánként KÖNNYŰ 2, NORMÁL 5, EXTRÉM 7.","BALANCE: <b>"+fmt(s.coins)+" COIN</b> • every skin costs <b>"+SKIN_PRICE+" COIN</b><br>Coins per duck: EASY 2, NORMAL 5, EXTREME 7.");
     const wrap=document.createElement("div");wrap.className="skins";
     SKINS.forEach(k=>wrap.append(skinCard(k)));
     screenBody.append(wrap);
-    menuBtns.append(mkBtn("VISSZA",()=>showMenu(storeFrom)));
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu(storeFrom)));
     menuBack=()=>showMenu(storeFrom);
   }else if(kind==="settings"){
-    ovTitle.textContent="BEÁLLÍTÁSOK";
-    ovText.textContent="SLOT "+(cur+1)+" • a beállítások slotonként mentődnek";
+    ovTitle.textContent=T("BEÁLLÍTÁSOK","SETTINGS");
+    ovText.textContent="SLOT "+(cur+1)+T(" • a beállítások slotonként mentődnek"," • settings are saved per slot");
     syncSettingsUI();
-    menuBtns.append(mkBtn("VISSZA",()=>showMenu(settingsFrom)));
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu(settingsFrom)));
     menuBack=()=>showMenu(settingsFrom);
   }else if(kind==="help"){
-    ovTitle.textContent="SEGÍTSÉG";
-    const d=document.createElement("div");d.className="help";d.innerHTML=HELP;screenBody.append(d);
-    menuBtns.append(mkBtn("VISSZA",()=>showMenu("title")));
+    ovTitle.textContent=T("SEGÍTSÉG","HELP");
+    const d=document.createElement("div");d.className="help";d.innerHTML=helpText();screenBody.append(d);
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu("title")));
     menuBack=()=>showMenu("title");
   }else if(kind==="pause"){
-    ovTitle.textContent="SZÜNET";
+    ovTitle.textContent=T("SZÜNET","PAUSED");
     ovText.innerHTML=stat()+(s?" • SLOT "+(cur+1):"");
     ovHint.style.display="";
     menuBtns.append(
-      mkBtn("FOLYTATÁS",resumeGame),
-      mkBtn("MENTÉS",()=>{menuNote=saveRun()?"MENTVE: SLOT "+(cur+1):"NEM SIKERÜLT A MENTÉS";showMenu("pause")}),
-      mkBtn("SKIN BOLT",()=>{storeFrom="pause";showMenu("store")}),
-      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="pause";showMenu("settings")}),
-      mkBtn("ÚJRAKEZDÉS",()=>{diffFrom="pause";showMenu("difficulty")}),
-      mkBtn("FŐMENÜ",()=>runDirty?showMenu("confirmExit"):toTitle()));
+      mkBtn(T("FOLYTATÁS","RESUME"),resumeGame),
+      mkBtn(T("MENTÉS","SAVE"),()=>{menuNote=saveRun()?T("MENTVE: SLOT ","SAVED: SLOT ")+(cur+1):T("NEM SIKERÜLT A MENTÉS","SAVE FAILED");showMenu("pause")}),
+      mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="pause";showMenu("store")}),
+      mkBtn(T("BEÁLLÍTÁSOK","SETTINGS"),()=>{settingsFrom="pause";showMenu("settings")}),
+      mkBtn(T("ÚJRAKEZDÉS","RESTART"),()=>{diffFrom="pause";showMenu("difficulty")}),
+      mkBtn(T("FŐMENÜ","MAIN MENU"),()=>runDirty?showMenu("confirmExit"):toTitle()));
     menuBack=resumeGame;
   }else if(kind==="confirmExit"){
-    ovTitle.textContent="KILÉPÉS";
-    ovText.innerHTML="Mentés nélkül a félbehagyott játékod <b>elvész</b>.";
+    ovTitle.textContent=T("KILÉPÉS","QUIT");
+    ovText.innerHTML=T("Mentés nélkül a félbehagyott játékod <b>elvész</b>.","Without saving, your unfinished game will be <b>lost</b>.");
     menuBtns.append(
-      mkBtn("MENTÉS ÉS KILÉPÉS",()=>{saveRun();toTitle()}),
-      mkBtn("KILÉPÉS MENTÉS NÉLKÜL",toTitle),
-      mkBtn("MÉGSEM",()=>showMenu("pause")));
+      mkBtn(T("MENTÉS ÉS KILÉPÉS","SAVE & QUIT"),()=>{saveRun();toTitle()}),
+      mkBtn(T("KILÉPÉS MENTÉS NÉLKÜL","QUIT WITHOUT SAVING"),toTitle),
+      mkBtn(T("MÉGSEM","CANCEL"),()=>showMenu("pause")));
     menuBack=()=>showMenu("pause");
   }else if(kind==="confirmDelete"){
-    ovTitle.textContent="SLOT TÖRLÉSE";
-    ovText.innerHTML="Biztosan törlöd a(z) <b>SLOT "+(cur+1)+"</b> minden adatát (rekordok, beállítások, mentett játék)? Ez nem vonható vissza.";
+    ovTitle.textContent=T("SLOT TÖRLÉSE","DELETE SLOT");
+    ovText.innerHTML=T("Biztosan törlöd a(z) <b>SLOT "+(cur+1)+"</b> minden adatát (rekordok, beállítások, mentett játék)? Ez nem vonható vissza.","Are you sure you want to delete all data of <b>SLOT "+(cur+1)+"</b> (records, settings, saved game, coins and skins)? This cannot be undone.");
     menuBtns.append(
-      mkBtn("IGEN, TÖRLÉS",()=>{slots[cur]=null;saveSlots();cur=-1;showMenu("slots")}),
-      mkBtn("MÉGSEM",()=>showMenu("slotmenu")));
+      mkBtn(T("IGEN, TÖRLÉS","YES, DELETE"),()=>{slots[cur]=null;saveSlots();cur=-1;showMenu("slots")}),
+      mkBtn(T("MÉGSEM","CANCEL"),()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="over"){
-    ovTitle.innerHTML=overReason==="time"?"IDŐ <br>LEJÁRT":"GAME <br>OVER";
+    ovTitle.innerHTML=overReason==="time"?T("IDŐ <br>LEJÁRT","TIME'S <br>UP"):"GAME <br>OVER";
     ovText.innerHTML=stat();
-    ovBest.textContent=s?((nb?"ÚJ REKORD: ":"REKORD: ")+fmt(s.stats.best)):"";
+    ovBest.textContent=s?((nb?T("ÚJ REKORD: ","NEW RECORD: "):T("REKORD: ","BEST: "))+fmt(s.stats.best)):"";
     menuBtns.append(
-      mkBtn("ÚJRA",()=>{diffFrom="over";showMenu("difficulty")}),
-      mkBtn("SKIN BOLT",()=>{storeFrom="over";showMenu("store")}),
-      mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="over";showMenu("settings")}),
-      mkBtn("FŐMENÜ",toTitle));
+      mkBtn(T("ÚJRA","AGAIN"),()=>{diffFrom="over";showMenu("difficulty")}),
+      mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="over";showMenu("store")}),
+      mkBtn(T("BEÁLLÍTÁSOK","SETTINGS"),()=>{settingsFrom="over";showMenu("settings")}),
+      mkBtn(T("FŐMENÜ","MAIN MENU"),toTitle));
   }
   overlay.style.display="flex";
 }
 function syncSettingsUI(){
   sensEl.value=sens;sensVal.textContent=sens.toFixed(1)+"×";
+  langSeg.querySelectorAll(".segbtn").forEach(b=>b.classList.toggle("on",b.dataset.v===LANG));
   musEl.value=Snd.get("m");musVal.textContent=Math.round(Snd.get("m")*100)+"%";
   sfxEl.value=Snd.get("s");sfxVal.textContent=Math.round(Snd.get("s")*100)+"%";
 }
 const musEl=$("musEl"),musVal=$("musVal"),sfxEl=$("sfxEl"),sfxVal=$("sfxVal"),muteBtn=$("muteBtn");
-function syncMute(){muteBtn.textContent=Snd.isMuted()?"NÉMA":"HANG"}
+function syncMute(){muteBtn.textContent=Snd.isMuted()?T("NÉMA","MUTED"):T("HANG","SOUND")}
+const langSeg=$("langSeg");
+function setLang(l){
+  LANG=l;try{localStorage.setItem("dfLang",l)}catch(e){}
+  applyLangStatic();syncMute();dogTxt="";updateHUD();updateDogHUD();
+  showMenu(menuKind);
+}
+langSeg.addEventListener("click",e=>{const b=e.target.closest(".segbtn");if(!b||b.dataset.v===LANG)return;b.blur();setLang(b.dataset.v)});
 musEl.addEventListener("input",()=>{Snd.vol("m",parseFloat(musEl.value));musVal.textContent=Math.round(musEl.value*100)+"%"});
 sfxEl.addEventListener("input",()=>{Snd.vol("s",parseFloat(sfxEl.value));sfxVal.textContent=Math.round(sfxEl.value*100)+"%"});
 sfxEl.addEventListener("change",()=>Snd.shot());
@@ -1516,14 +1550,14 @@ function update(dt){
   if(state==="mini"){updateMini(dt);return}
   if(state==="menu")return;
 
-  if(reloadTimer>0){reloadTimer-=dt;if(reloadTimer<=0){reload();showToast("ÚJRATÖLTÉS")}}
+  if(reloadTimer>0){reloadTimer-=dt;if(reloadTimer<=0){reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
   if(state==="play"){
     timeLeft-=dt;
     const sec=Math.ceil(timeLeft);
     if(sec!==lastSec){lastSec=sec;updateTimerHUD()}
     if(timeLeft<=0){
       timeLeft=0;Snd.over();overReason="time";state="over";overTimer=1.1;reloadTimer=0;
-      updateTimerHUD();showToast("LEJÁRT AZ IDŐ!","#ff6a6a");
+      updateTimerHUD();showToast(T("LEJÁRT AZ IDŐ!","TIME IS UP!"),"#ff6a6a");
     }
     spawnTimer-=dt;
     const target=difficulty.value==="easy"?2:difficulty.value==="normal"?3:4;
@@ -1809,7 +1843,7 @@ addEventListener("keydown",e=>{
 });
 const portraitMQ=matchMedia("(orientation:portrait)");
 function checkPortrait(){if(portraitMQ.matches)openPause()}
-function doReload(){if(state==="play"&&!paused&&ammo<3){reloadTimer=0;reload();showToast("ÚJRATÖLTÉS")}}
+function doReload(){if(state==="play"&&!paused&&ammo<3){reloadTimer=0;reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
 menuBtn.onclick=()=>{menuBtn.blur();openPause()};
 reloadBtn.addEventListener("pointerdown",e=>{e.preventDefault();doReload()});
 dogBtn.addEventListener("pointerdown",e=>{e.preventDefault();callDog()});
@@ -1825,6 +1859,7 @@ addEventListener("orientationchange",()=>setTimeout(()=>{resize();checkPortrait(
 resize();
 mouse.x=VW/2;mouse.y=H/2;
 dog.x=dogSpot().x;
+applyLangStatic();
 showMenu("title");
 syncMute();
 updateHUD();
