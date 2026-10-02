@@ -59,6 +59,7 @@ body{position:fixed;inset:0}
 /* Vezérlők */
 #controls{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:5;background:var(--ink);border:3px solid #f4f4f4;
  box-shadow:0 0 0 3px #000,4px 4px 0 3px rgba(0,0,0,.45);padding:8px 10px}
+#controls{display:flex;gap:6px}
 #controls .btn{margin:0}
 .btn{font-family:var(--px);font-size:10px;padding:9px 12px;margin-top:8px;background:var(--gold);color:var(--ink);border:3px solid #000;
  box-shadow:inset -3px -3px 0 #d08030,inset 3px 3px 0 #ffe8a0;cursor:pointer}
@@ -213,7 +214,7 @@ body.touch #titleArt{filter:none}
   <div class="card ready" id="dogCard"><div class="label">KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
-<div id="controls"><button class="btn" id="menuBtn">MENÜ</button></div>
+<div id="controls"><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn">MENÜ</button></div>
 
 <div id="toast"></div>
 <div id="hurt"></div>
@@ -232,6 +233,15 @@ body.touch #titleArt{filter:none}
         <div class="setlabel"><span>ÉRZÉKENYSÉG</span><span id="sensVal">1.0×</span></div>
         <input type="range" id="sens" min="0.3" max="3" step="0.1" value="1">
         <div class="setdesc">Az egér sebessége célzáskor. Játék közben az egér le van zárva a játékba, az ESC kilép belőle és megnyitja a menüt.</div>
+      </div>
+      <div class="setrow">
+        <div class="setlabel"><span>ZENE</span><span id="musVal">60%</span></div>
+        <input type="range" id="musEl" min="0" max="1" step="0.05" value="0.6">
+      </div>
+      <div class="setrow">
+        <div class="setlabel"><span>HANGEFFEKTEK</span><span id="sfxVal">80%</span></div>
+        <input type="range" id="sfxEl" min="0" max="1" step="0.05" value="0.8">
+        <div class="setdesc">Játék közben az M billentyűvel vagy a HANG gombbal is lehet némítani. A hang beállítása minden slotra közös.</div>
       </div>
       <div class="setrow" id="fsRow"><button class="btn" id="fsBtn">TELJES KÉPERNYŐ</button></div>
     </div>
@@ -779,6 +789,7 @@ function spawnDuck(){
   ducks.push({x,y,vx:Math.cos(angle)*speed*K,vy:Math.sin(angle)*speed*K,speed,baseSpeed:speed,
     type:pick(["straight","sine","zigzag","dive","loop"]),extreme,t:0,phase:rand(0,Math.PI*2),
     face:side<0?1:-1,trail:[],trailT:0});
+  if(Math.random()<.45)Snd.quack(.5);
 }
 function updateDuck(d,dt){
   d.t+=dt;
@@ -899,13 +910,13 @@ function callDog(){
   if(dog.mode==="fetch"||dog.mode==="pick"){showToast("A KUTYA DOLGOZIK!","#94b0c2");return}
   if(dog.cd>0){showToast("A KUTYA PIHEN…  "+Math.ceil(dog.cd)+" MP","#94b0c2");return}
   if(!lying.length){showToast("NINCS KACSA A FÜVÖN!","#94b0c2");return}
-  dog.cd=DOG_CD;dog.alert=.6;dog.carry=false;dog.rt=null;dog.sniff=0;
+  dog.cd=DOG_CD;dog.alert=.6;Snd.bark(2);dog.carry=false;dog.rt=null;dog.sniff=0;
   pickTarget();updateDogHUD();
 }
 function dogGrab(){
   const l=dog.tgt,i=l?lying.indexOf(l):-1;
   if(i>=0){
-    lying.splice(i,1);
+    lying.splice(i,1);Snd.bark(1);
     score+=l.pts;dog.carry=true;                                // a kacsa pontja duplázódik
     pop("×2  +"+l.pts,dog.x,dog.y-30,"#ffe066");
     showToast("APORT!  KACSA ×2  +"+l.pts,"#ffe066");
@@ -942,7 +953,7 @@ function updateDog(dt){
       dog.mode=dog.cd>0?"roam":"ready";dog.rt=null;dog.sniff=.5;
     }
   }else if(m==="roam"){
-    if(dog.cd<=0){dog.mode="return";showToast("A KUTYA KÉSZEN ÁLL!"+(lastPType==="touch"?"":"  [Q]"),"#a7f070");return}
+    if(dog.cd<=0){dog.mode="return";Snd.ding();showToast("A KUTYA KÉSZEN ÁLL!"+(lastPType==="touch"?"":"  [Q]"),"#a7f070");return}
     if(dog.sniff>0)dog.sniff-=dt;
     else{
       if(!dog.rt)dog.rt={x:rand(16,VW-16),y:rand(GY+40,H-14)};
@@ -961,7 +972,7 @@ function updateDogHUD(){
 /* ====== Lövés ====== */
 function shoot(mx,my){
   if(state!=="play"||paused||ammo<=0)return;
-  ammo--;
+  ammo--;Snd.shot();
   const m=muzzle(),dx=Math.sin(m.a),dy=-Math.cos(m.a);
   recoil=1;shake=.1;flashT=.09;screenFlash=.05;tracer={x0:m.x,y0:m.y,x1:mx,y1:my,t:.05};
   // füst
@@ -989,11 +1000,11 @@ function killDuck(i){
   combo++;
   const comboBonus=Math.min(1000,combo*75);
   const pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
-  score+=pts;kills++;runDirty=true;
+  score+=pts;kills++;runDirty=true;Snd.hit();Snd.fall();
   hitstop=.06;screenFlash=.06;
   const bonus=kills%BONUS_EVERY===0,msg=pick(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"])+"  +"+pts;
   if(bonus){
-    timeLeft+=BONUS_TIME;
+    timeLeft+=BONUS_TIME;setTimeout(Snd.bonus,250);
     showToast("+"+BONUS_TIME+" MP IDŐ!  "+msg,"#a7f070");
     pop("+"+BONUS_TIME+" MP",d.x,d.y+8,"#a7f070");
     timeCard.classList.add("bonus");setTimeout(()=>timeCard.classList.remove("bonus"),700);
@@ -1014,7 +1025,7 @@ function killDuck(i){
   updateHUD();
 }
 function miss(mx,my){
-  combo=0;runDirty=true;
+  combo=0;runDirty=true;Snd.miss();
   const ground=my>GY;
   const cols=ground?["#7a4a2a","#a8703c","#3c9a2a","#58b833"]:["#ffffff","#ffe066","#ffa020"];
   for(let i=0;i<14;i++){
@@ -1025,9 +1036,9 @@ function miss(mx,my){
   hp=Math.max(0,hp-1);
   hurtEl.classList.remove("go");void hurtEl.offsetWidth;hurtEl.classList.add("go");
   showToast(hp>0?"MELLÉ!  -1 SZÍV":"ELFOGYTAK A SZÍVEID!","#ff6a6a");
-  if(hp<=0){overReason="hp";state="over";overTimer=1.1;reloadTimer=0}
+  if(hp<=0){Snd.over();overReason="hp";state="over";overTimer=1.1;reloadTimer=0}
 }
-function reload(){ammo=3;pumpT=.3;updateHUD()}
+function reload(){ammo=3;pumpT=.3;Snd.pump();updateHUD()}
 
 /* ====== Játékmenet ====== */
 function resetRun(){
@@ -1052,7 +1063,7 @@ function startGame(run){
     sunY=SUNY[ph];
     updateHUD();
   }
-  state="play";runDirty=!!run;
+  state="play";runDirty=!!run;Snd.start();
   showToast(run?"FOLYTATÁS!":"VADÁSZAT INDUL!");
   spawnDuck();spawnDuck();
   lock();
@@ -1254,7 +1265,18 @@ function showMenu(kind,nb){
   }
   overlay.style.display="flex";
 }
-function syncSettingsUI(){sensEl.value=sens;sensVal.textContent=sens.toFixed(1)+"×"}
+function syncSettingsUI(){
+  sensEl.value=sens;sensVal.textContent=sens.toFixed(1)+"×";
+  musEl.value=Snd.get("m");musVal.textContent=Math.round(Snd.get("m")*100)+"%";
+  sfxEl.value=Snd.get("s");sfxVal.textContent=Math.round(Snd.get("s")*100)+"%";
+}
+const musEl=$("musEl"),musVal=$("musVal"),sfxEl=$("sfxEl"),sfxVal=$("sfxVal"),muteBtn=$("muteBtn");
+function syncMute(){muteBtn.textContent=Snd.isMuted()?"NÉMA":"HANG"}
+musEl.addEventListener("input",()=>{Snd.vol("m",parseFloat(musEl.value));musVal.textContent=Math.round(musEl.value*100)+"%"});
+sfxEl.addEventListener("input",()=>{Snd.vol("s",parseFloat(sfxEl.value));sfxVal.textContent=Math.round(sfxEl.value*100)+"%"});
+sfxEl.addEventListener("change",()=>Snd.shot());
+muteBtn.onclick=()=>{muteBtn.blur();Snd.mute();syncMute()};
+
 sensEl.addEventListener("input",()=>{
   sens=parseFloat(sensEl.value);sensVal.textContent=sens.toFixed(1)+"×";
   const s=S();if(s){s.settings.sens=sens;saveSlots()}
@@ -1286,7 +1308,7 @@ function update(dt){
     const sec=Math.ceil(timeLeft);
     if(sec!==lastSec){lastSec=sec;updateTimerHUD()}
     if(timeLeft<=0){
-      timeLeft=0;overReason="time";state="over";overTimer=1.1;reloadTimer=0;
+      timeLeft=0;Snd.over();overReason="time";state="over";overTimer=1.1;reloadTimer=0;
       updateTimerHUD();showToast("LEJÁRT AZ IDŐ!","#ff6a6a");
     }
     spawnTimer-=dt;
@@ -1309,6 +1331,7 @@ function update(dt){
       for(let n=0;n<9;n++)P({x:f.x+rand(-5,5),y:f.gy,vx:rand(-30,30),vy:-rand(20,60),life:rand(.3,.6),
         c:pick(["#7a4a2a","#a8703c","#58b833","#b06a30"]),s:pick([1,2]),g:220,dr:1});
       for(let n=0;n<3;n++)P({x:f.x+rand(-4,4),y:f.gy-1,vx:rand(-6,6),vy:-rand(6,14),life:rand(.4,.7),c:"#c8ccd8",s:2,sm:true});
+      Snd.thud();
       lying.push({x:Math.max(10,Math.min(VW-10,f.x)),y:f.gy,pts:f.pts,face:f.face,life:LIE_TIME});
       falling.splice(i,1);
     }
@@ -1378,9 +1401,136 @@ let last=performance.now();
 function loop(now){
   const dt=Math.max(0,Math.min(.033,(now-last)/1000));last=now;
   if(!paused){if(hitstop>0)hitstop-=dt;else update(dt)}
+  Snd.mode(state==="menu"?"title":paused?"pause":state==="play"?"game":"over");Snd.inten(Math.min(4,Math.floor(kills/BONUS_EVERY)));
   if(state==="menu")renderTitle();else render();
   requestAnimationFrame(loop);
 }
+
+/* ====== Hang: minden WebAudio-val szintetizálva (nincs külső fájl) ====== */
+const Snd=(()=>{
+  let ac=null,musG,sfxG,nb,cur="",tmr=0,step=0,nextT=0,key="",inten=0,lastQ=0;
+  const vol={m:.6,s:.8,mute:false};
+  try{Object.assign(vol,JSON.parse(localStorage.getItem("dfAudio")||"{}"))}catch(e){}
+  const mf=n=>440*Math.pow(2,(n-69)/12);
+  function save(){try{localStorage.setItem("dfAudio",JSON.stringify(vol))}catch(e){}}
+  function apply(){
+    if(!ac)return;const t=ac.currentTime;
+    musG.gain.setTargetAtTime(vol.mute?0:vol.m*(cur==="pause"?.3:1)*.45,t,.06);
+    sfxG.gain.setTargetAtTime(vol.mute?0:vol.s,t,.02);
+  }
+  function init(){
+    if(ac){if(ac.state==="suspended")ac.resume();return}
+    try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+    const comp=ac.createDynamicsCompressor();comp.connect(ac.destination);
+    musG=ac.createGain();sfxG=ac.createGain();musG.connect(comp);sfxG.connect(comp);
+    nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);
+    const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    apply();tmr=setInterval(tick,30);
+  }
+  const ok=()=>ac&&!vol.mute&&ac.state==="running";
+  function tone(f,t,d,type,v,dest,f2){
+    const o=ac.createOscillator(),g=ac.createGain();o.type=type;
+    o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+d+.03);
+  }
+  function noise(t,d,v,type,f0,f1,dest){
+    const s=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();
+    s.buffer=nb;fl.type=type;fl.frequency.setValueAtTime(f0,t);if(f1)fl.frequency.exponentialRampToValueAtTime(f1,t+d);
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    s.connect(fl);fl.connect(g);g.connect(dest||sfxG);s.start(t,Math.random()*.5);s.stop(t+d+.03);
+  }
+  function pad(notes,t,d){
+    notes.forEach(n=>{
+      const o=ac.createOscillator(),g=ac.createGain();o.type="triangle";o.frequency.value=mf(n);
+      g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.12,t+.4);g.gain.setValueAtTime(.12,t+d-.5);g.gain.linearRampToValueAtTime(.0001,t+d);
+      o.connect(g);g.connect(musG);o.start(t);o.stop(t+d+.05);
+    });
+  }
+  /* --- zene: két téma (A-moll), 16-odos lépésekben --- */
+  const ROOT=[45,41,48,43];
+  const GAME={bpm:138,lead:[[0,69,2],[2,72,2],[4,76,2],[6,72,2],[8,69,2],[10,76,2],[12,74,2],[14,72,2],
+    [16,65,2],[18,69,2],[20,72,2],[22,69,2],[24,77,2],[26,76,2],[28,74,2],[30,72,2],
+    [32,76,2],[34,79,2],[36,76,2],[38,72,2],[40,67,2],[42,72,2],[44,76,4],
+    [48,74,2],[50,79,2],[52,71,2],[54,74,2],[56,79,2],[58,77,2],[60,76,2],[62,74,2]],ly:"square",lv:.16};
+  const TITLE={bpm:92,lead:[[0,76,6],[6,74,2],[8,72,4],[12,69,4],[16,69,6],[22,72,2],[24,77,4],[28,76,4],
+    [32,79,6],[38,76,2],[40,72,4],[44,74,4],[48,71,8],[56,74,4],[60,67,4]],ly:"triangle",lv:.2,
+    pads:[[57,60,64],[53,57,60],[55,60,64],[55,59,62]]};
+  function sched(p,s,t,sd){
+    const st=s%64,bar=st>>4,i=st&15;
+    for(const[n0,n,l]of p.lead)if(n0===st)tone(mf(n),t,l*sd*.92,p.ly,p.lv,musG);
+    if(p.pads&&i===0)pad(p.pads[bar],t,16*sd);
+    const r=ROOT[bar];
+    if(p===GAME){
+      if(i%2===0)tone(mf(i===6||i===14?r+7:r),t,sd*1.7,"triangle",.34,musG);
+      if(i===0||i===8||i===10)tone(150,t,.12,"sine",.5,musG,45);
+      if(i===4||i===12)noise(t,.1,.22,"bandpass",1800,900,musG);
+      if(i%2===0)noise(t,.03,.07,"highpass",7000,0,musG);
+    }else{
+      if(i===0||i===8)tone(mf(r),t,sd*7,"triangle",.3,musG);
+      if(i===0||i===8)tone(130,t,.14,"sine",.28,musG,45);
+      if(i===4||i===12)noise(t,.03,.05,"highpass",7000,0,musG);
+    }
+  }
+  function tick(){
+    if(!ac||ac.state!=="running"||!key)return;
+    const p=key==="game"?GAME:TITLE,sd=60/(p.bpm+(key==="game"?inten*5:0))/4;
+    if(nextT<ac.currentTime-.3)nextT=ac.currentTime+.05;
+    while(nextT<ac.currentTime+.14){sched(p,step,nextT,sd);step++;nextT+=sd}
+  }
+  const api={
+    init,
+    mode(m){
+      if(m===cur)return;cur=m;
+      const k=m==="pause"?"game":(m==="title"||m==="game")?m:"";
+      if(k!==key){key=k;step=0;if(ac)nextT=ac.currentTime+.08}
+      apply();
+    },
+    inten(n){inten=n},
+    mute(v){vol.mute=v===undefined?!vol.mute:v;save();apply();return vol.mute},
+    isMuted:()=>vol.mute,
+    vol(k,v){vol[k]=v;save();apply()},
+    get:k=>vol[k],
+    click(){if(!ok())return;tone(660,ac.currentTime,.05,"square",.12)},
+    shot(){if(!ok())return;const t=ac.currentTime;
+      noise(t,.28,.9,"lowpass",3500,150);noise(t,.05,.7,"highpass",2500,0);tone(130,t,.22,"sine",.9,0,38)},
+    pump(){if(!ok())return;const t=ac.currentTime;
+      noise(t,.04,.4,"bandpass",1400,0);tone(220,t,.05,"square",.1);
+      noise(t+.13,.05,.45,"bandpass",900,0);tone(160,t+.13,.06,"square",.1)},
+    hit(){if(!ok())return;const t=ac.currentTime;
+      noise(t,.14,.5,"highpass",3000,800);tone(900,t,.12,"square",.16,0,1500);
+      for(let i=0;i<2;i++)api._q(t+.05+i*.15,1.0,.5)},
+    _q(t,sc,v){
+      const o=ac.createOscillator(),f=ac.createBiquadFilter(),g=ac.createGain(),b=520*sc*(.9+Math.random()*.25);
+      o.type="sawtooth";o.frequency.setValueAtTime(b,t);o.frequency.exponentialRampToValueAtTime(b*.6,t+.14);
+      f.type="bandpass";f.frequency.value=1100;f.Q.value=2.5;
+      g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.15);
+      o.connect(f);f.connect(g);g.connect(sfxG);o.start(t);o.stop(t+.18);
+    },
+    quack(v){if(!ok())return;const t=ac.currentTime;if(t-lastQ<.5)return;lastQ=t;
+      api._q(t,.85+Math.random()*.4,(v||.5)*.55);if(Math.random()<.5)api._q(t+.17,.8,(v||.5)*.4)},
+    fall(){if(!ok())return;const t=ac.currentTime+.12;tone(1000,t,.7,"sine",.14,0,180)},
+    thud(){if(!ok())return;const t=ac.currentTime;
+      tone(110,t,.16,"sine",.7,0,42);noise(t,.12,.4,"lowpass",600,120)},
+    bonus(){if(!ok())return;const t=ac.currentTime;
+      [523,659,784,1047,1319].forEach((f,i)=>tone(f,t+i*.07,.16,"square",.15));
+      tone(2093,t+.36,.3,"triangle",.14)},
+    bark(n){if(!ok())return;const t=ac.currentTime;
+      for(let i=0;i<(n||1);i++){const s=t+i*.2,p=.9+Math.random()*.2;
+        noise(s,.11,.55,"bandpass",900*p,500,0);tone(330*p,s,.13,"square",.2,0,150*p);tone(660*p,s,.08,"sawtooth",.08,0,300)}},
+    ding(){if(!ok())return;const t=ac.currentTime;tone(988,t,.25,"sine",.3);tone(1319,t+.1,.4,"sine",.3)},
+    miss(){if(!ok())return;const t=ac.currentTime;
+      tone(170,t,.3,"sawtooth",.28,0,70);noise(t,.2,.25,"lowpass",800,200)},
+    start(){if(!ok())return;const t=ac.currentTime;
+      [392,523,659,784].forEach((f,i)=>tone(f,t+i*.09,.18,"square",.14))},
+    over(){if(!ok())return;const t=ac.currentTime;
+      [440,392,349,262].forEach((f,i)=>tone(f,t+i*.28,.4,"triangle",.3))}
+  };
+  return api;
+})();
+document.addEventListener("click",e=>{if(e.target.closest(".btn,.slotcard,.diffcard,.segbtn"))Snd.click()});
+addEventListener("pointerdown",()=>Snd.init(),true);
+addEventListener("keydown",()=>Snd.init(),true);
 
 /* ====== Input ====== */
 let touchMode=false;   // ujjal játszik → nagyobb találati sugár, nincs célkereszt
@@ -1431,6 +1581,7 @@ canvas.addEventListener("contextmenu",e=>e.preventDefault());
 addEventListener("keydown",e=>{
   if(e.key.toLowerCase()==="r")doReload();
   if(e.key.toLowerCase()==="q")callDog();
+  if(e.key.toLowerCase()==="m"){Snd.mute();syncMute()}
   if(e.key==="Escape"){
     if(performance.now()-lastLockLoss<250)return;     // ugyanaz az ESC már kilépett az egérzárból
     if(state==="play"&&!paused)openPause();
@@ -1456,12 +1607,9 @@ resize();
 mouse.x=VW/2;mouse.y=H/2;
 dog.x=dogSpot().x;
 showMenu("title");
+syncMute();
 updateHUD();
 requestAnimationFrame(loop);
 </script>
 </body>
 </html>
-npm i @vercel/analytics
-yarn add @vercel/analytics
-pnpm i @vercel/analytics
-import { Analytics } from "@vercel/analytics/next"
