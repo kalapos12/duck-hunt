@@ -363,7 +363,7 @@ const HEART_F=spr(HEART,{k:"#000000",w:"#ff9ea0",r:"#e43b44",s:"#a22633"});
 const HEART_E=spr(HEART,{k:"#566c86",w:"#333c57",r:"#333c57",s:"#29304a"});
 
 /* Puska (felülről/hátulról nézve, cső felfelé) – cserélhető skinekkel */
-const SKIN_PRICE=500;
+const SKIN_PRICE=2000;
 const SKINS=[
  {id:"classic",name:"KLASSZIKUS",m:["#3a4050","#5c6b80","#94a8bc"],w:["#8a4f22","#b8743a","#a8642e","#5c3312"],a:"#ffcd75"},
  {id:"gold",name:"ARANY",m:["#7a5a10","#d8a820","#fff0a0"],w:["#a8741c","#e8b838","#d8a020","#7a5410"],a:"#ffffff"},
@@ -1137,8 +1137,8 @@ function showOver(){
 }
 
 /* ====== Minijáték: SZERENCSE KACSA – 10 kacsa közül egyet lőhetsz le, a nyeremény titkos ====== */
-const MINI_PRIZES=[0,0,0,5,5,10,10,15,15,50],MINI_COST=10;
-const MINI_COL={0:"#94a8bc",5:"#f4f4f4",10:"#73eff7",15:"#a7f070",50:"#ffe066"};
+const MINI_PRIZES=[0,0,0,50,50,100,100,150,150,500],MINI_COST=100,MINI_CD=20*60*1000;
+const MINI_COL={0:"#94a8bc",50:"#f4f4f4",100:"#73eff7",150:"#a7f070",500:"#ffe066"};
 const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",
  5:"111100111001111",6:"111100111101111",7:"111001001001001",8:"111101111101111",9:"111101111001111"};
 let mini={ducks:[],phase:"aim",t:0,prize:null,rt:0};
@@ -1156,10 +1156,13 @@ function drawNum(str,cx,y,col,sc){
     }
   }
 }
+function miniRemain(){const s=S();return s?Math.max(0,(s.miniAt||0)+MINI_CD-Date.now()):0}
+function fmtCd(ms){const t=Math.ceil(ms/1000);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
 function startMini(){
   const s=S();if(!s)return;
+  if(miniRemain()>0){menuNote="MÉG "+fmtCd(miniRemain())+" PERC, MIRE ÚJRA JÁTSZHATSZ";Snd.deny();showMenu("minimenu");return}
   if(s.coins<MINI_COST){menuNote="NINCS ELÉG COIN – A BELÉPŐ "+MINI_COST+" COIN";Snd.deny();showMenu("minimenu");return}
-  s.coins-=MINI_COST;saveSlots();
+  s.coins-=MINI_COST;s.miniAt=Date.now();saveSlots();
   hideMenu();resetRun();ammo=3;
   const pr=MINI_PRIZES.slice();
   for(let i=pr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pr[i],pr[j]]=[pr[j],pr[i]]}
@@ -1193,7 +1196,7 @@ function drawMini(){
       glyph(G_Q,d.x-2,d.y-24+by,"#ffe066");
     }else{
       const col=MINI_COL[d.prize];
-      if(d.prize===50&&((frame>>2)&1))continue;
+      if(d.prize===500&&((frame>>2)&1))continue;
       drawNum(String(d.prize),d.x,d.y-22,col,2);
     }
   }
@@ -1218,10 +1221,10 @@ function miniHit(mx,my){
     P({x:hit.x,y:hit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-20,life:rand(.5,1.1),c:pick(["#b06a30","#73401c","#f4f4f4","#38b764","#e8b878"]),s:pick([1,2,2]),g:90,dr:1.2})}
   if(p===0){Snd.deny();showToast("ÜRES KACSA…  0 COIN","#94a8bc");pop("0 COIN",hit.x,hit.y-10,"#94a8bc")}
   else{
-    [0,110,220].slice(0,p>=50?3:p>=15?3:p>=10?2:1).forEach(t=>setTimeout(Snd.coin,t+150));
+    [0,110,220].slice(0,p>=500?3:p>=150?3:p>=100?2:1).forEach(t=>setTimeout(Snd.coin,t+150));
     pop("+"+p+" COIN",hit.x,hit.y-10,"#ffe066");
-    if(p>=50){
-      setTimeout(Snd.bonus,250);screenFlash=.2;showToast("JACKPOT!  +50 COIN","#ffe066");
+    if(p>=500){
+      setTimeout(Snd.bonus,250);screenFlash=.2;showToast("JACKPOT!  +500 COIN","#ffe066");
       for(let n=0;n<50;n++){const a=rand(0,6.28),sp=rand(40,160);
         P({x:hit.x,y:hit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,life:rand(.7,1.4),c:pick(["#ffe066","#ffcd75","#ffffff","#ef7d57"]),s:pick([1,2,3]),g:120,dr:.8})}
     }else showToast("+"+p+" COIN!","#a7f070");
@@ -1233,7 +1236,7 @@ function leaveMini(){state="menu";resetRun();showMenu("slotmenu")}
 /* ====== Mentési helyek (3 slot): beállítások, statisztika, félbehagyott játék ====== */
 const SLOT_KEY="dfSlots1";
 function normSlot(s){
-  s.coins=Math.max(0,+s.coins||0);
+  s.coins=Math.max(0,+s.coins||0);s.miniAt=+s.miniAt||0;
   if(!Array.isArray(s.owned))s.owned=[];
   if(!s.owned.includes("classic"))s.owned.push("classic");
   if(!s.owned.includes(s.skin))s.skin="classic";
@@ -1334,6 +1337,11 @@ function skinCard(k){
   };
   return b;
 }
+let lastRemain=0;
+setInterval(()=>{
+  if(menuKind!=="minimenu"||overlay.style.display==="none")return;
+  const r=miniRemain();if(r>0||lastRemain>0){lastRemain=r;showMenu("minimenu")}
+},1000);
 function storeRefresh(){const y=panel.scrollTop;showMenu("store");panel.scrollTop=y}
 function showMenu(kind,nb){
   menuKind=kind;releaseLock();
@@ -1393,10 +1401,12 @@ function showMenu(kind,nb){
     menuBack=()=>showMenu(diffFrom);
   }else if(kind==="minimenu"&&s){
     ovTitle.innerHTML="SZERENCSE <br>KACSA";
+    lastRemain=miniRemain();
     ovText.innerHTML="Tíz kacsa repked a képernyőn, mindegyikben <b>titkos nyeremény</b> van. <b>Egyet</b> lőhetsz le a háromból: azt a nyereményt viszed el!"+
-      "<br><br>3 kacsa: <b>0</b> • 2 kacsa: <b>5</b> • 2 kacsa: <b>10</b> • 2 kacsa: <b>15</b> • 1 kacsa: <b>50</b> COIN"+
-      "<br><br>BELÉPŐ: <b>"+MINI_COST+" COIN</b> • EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>";
-    menuBtns.append(mkBtn("INDÍTÁS ("+MINI_COST+" COIN)",startMini),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+      "<br><br>3 kacsa: <b>0</b> • 2 kacsa: <b>50</b> • 2 kacsa: <b>100</b> • 2 kacsa: <b>150</b> • 1 kacsa: <b>500</b> COIN"+
+      "<br><br>BELÉPŐ: <b>"+MINI_COST+" COIN</b> • EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>"+
+      "<br>"+(miniRemain()>0?"KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva":"20 PERCENKÉNT JÁTSZHATÓ – <b>MOST ELÉRHETŐ</b>");
+    menuBtns.append(mkBtn(miniRemain()>0?"VÁRAKOZÁS: "+fmtCd(miniRemain()):"INDÍTÁS ("+MINI_COST+" COIN)",startMini),mkBtn("VISSZA",()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="minipause"){
     ovTitle.textContent="SZÜNET";
@@ -1405,10 +1415,10 @@ function showMenu(kind,nb){
     menuBack=resumeGame;
   }else if(kind==="miniover"&&s){
     const p=mini.prize||0;
-    ovTitle.innerHTML=p>=50?"JACKPOT!":p>0?"NYERTÉL!":"SAJNOS <br>NEM";
+    ovTitle.innerHTML=p>=500?"JACKPOT!":p>0?"NYERTÉL!":"SAJNOS <br>NEM";
     ovText.innerHTML=(p>0?"Nyeremény: <b>+"+p+" COIN</b>":"Üres kacsát lőttél.")+" • Belépő: -"+MINI_COST+
-      "<br>EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>";
-    menuBtns.append(mkBtn("ÚJRA ("+MINI_COST+" COIN)",startMini),mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+      "<br>EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b><br>KÖVETKEZŐ JÁTÉK: <b>"+fmtCd(miniRemain())+"</b> múlva";
+    menuBtns.append(mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),mkBtn("VISSZA",()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="store"&&s){
     ovTitle.textContent="SKIN BOLT";
