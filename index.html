@@ -56,6 +56,11 @@ body{position:fixed;inset:0}
 .card.ready .value{color:#a7f070}
 #dogVal{min-width:6ch}
 
+/* Szerencse-minijáték: csak a COIN és a LŐSZER kártya látszik */
+body.minimode #hud .card{display:none}
+body.minimode #hud #coinCard,body.minimode #hud #shellCard{display:block}
+body.minimode #dogBtn,body.minimode #reloadBtn{display:none!important}
+
 /* Vezérlők */
 #controls{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:5;background:var(--ink);border:3px solid #f4f4f4;
  box-shadow:0 0 0 3px #000,4px 4px 0 3px rgba(0,0,0,.45);padding:8px 10px}
@@ -183,6 +188,16 @@ body.touch #titleArt{filter:none}
 .slotcard b{color:var(--gold);font-weight:400}
 .slotcard .run,.diffcard .run{margin-top:10px;font-size:7px;line-height:1.8;color:#a7f070;border-top:2px dashed #566c86;padding-top:8px}
 .diffcard.last{border-color:var(--gold)}
+.skins{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.skincard{font-family:var(--px);color:#c8d6e0;background:#29366f;border:3px solid #000;padding:10px 4px;cursor:pointer;text-align:center;
+ box-shadow:inset 3px 3px 0 rgba(255,255,255,.18),inset -3px -3px 0 rgba(0,0,0,.35)}
+.skincard:hover{filter:brightness(1.25)}
+.skincard.eq{border-color:#a7f070}
+.skincard .pv{width:108px;height:40px;image-rendering:pixelated;display:block;margin:0 auto 8px;max-width:100%}
+.skincard .nm{font-size:8px;margin-bottom:8px;color:#fff}
+.skincard .st{font-size:7px;color:#94b0c2}
+.skincard .st.can{color:var(--gold)}.skincard .st.cant{color:#ff6a6a}
+.skincard.eq .st{color:#a7f070}.skincard.own .st{color:#73eff7}
 .help{text-align:left;margin-top:14px}
 .help p{margin:0 0 10px}
 @media (max-height:520px),(max-width:900px){
@@ -197,6 +212,11 @@ body.touch #titleArt{filter:none}
  .panel.plain h1 br{display:block}
  .panel.plain .menu{grid-template-columns:1fr 1fr}
  .help p{margin-bottom:5px}
+ .skins{gap:5px;margin-top:8px}
+ .skincard{padding:5px 2px;border-width:2px}
+ .skincard .pv{width:81px;height:30px;margin-bottom:4px}
+ .skincard .nm{font-size:6px;margin-bottom:3px}
+ .skincard .st{font-size:5px}
 }
 </style>
 </head>
@@ -210,7 +230,8 @@ body.touch #titleArt{filter:none}
   <div class="card"><div class="label">PONT</div><div class="value" id="score">0</div></div>
   <div class="card"><div class="label">LÁNC</div><div class="value" id="combo">0×</div></div>
   <div class="card"><div class="label">KACSA</div><div class="value" id="ducks">0</div></div>
-  <div class="card"><div class="label">LŐSZER</div><div id="shells"></div></div>
+  <div class="card" id="coinCard"><div class="label">COIN</div><div class="value" id="coins">0</div></div>
+  <div class="card" id="shellCard"><div class="label">LŐSZER</div><div id="shells"></div></div>
   <div class="card ready" id="dogCard"><div class="label">KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
@@ -255,7 +276,7 @@ body.touch #titleArt{filter:none}
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
-const scoreEl=$("score"),comboEl=$("combo"),ducksEl=$("ducks"),heartsEl=$("hearts"),shellsEl=$("shells"),
+const scoreEl=$("score"),coinsEl=$("coins"),comboEl=$("combo"),ducksEl=$("ducks"),heartsEl=$("hearts"),shellsEl=$("shells"),
       overlay=$("start"),
       toast=$("toast"),hurtEl=$("hurt"),ovTitle=$("ovTitle"),ovText=$("ovText"),
       ovBest=$("ovBest"),ovHint=$("ovHint"),
@@ -341,25 +362,45 @@ const HEART=[
 const HEART_F=spr(HEART,{k:"#000000",w:"#ff9ea0",r:"#e43b44",s:"#a22633"});
 const HEART_E=spr(HEART,{k:"#566c86",w:"#333c57",r:"#333c57",s:"#29304a"});
 
-/* Puska (felülről/hátulról nézve, cső felfelé) */
-const GUN=(()=>{
+/* Puska (felülről/hátulról nézve, cső felfelé) – cserélhető skinekkel */
+const SKIN_PRICE=500;
+const SKINS=[
+ {id:"classic",name:"KLASSZIKUS",m:["#3a4050","#5c6b80","#94a8bc"],w:["#8a4f22","#b8743a","#a8642e","#5c3312"],a:"#ffcd75"},
+ {id:"gold",name:"ARANY",m:["#7a5a10","#d8a820","#fff0a0"],w:["#a8741c","#e8b838","#d8a020","#7a5410"],a:"#ffffff"},
+ {id:"neon",name:"NEON",m:["#0a3a5a","#1c9ad8","#a8f4ff"],w:["#1a1c5c","#3a4aa8","#29366f","#0e1040"],a:"#ff4fd8"},
+ {id:"pink",name:"PINK",m:["#7a2a5a","#e870b0","#ffd0ec"],w:["#b03a80","#ff80c0","#e060a0","#7a1a58"],a:"#ffffff"},
+ {id:"camo",name:"ÁLCA",m:["#2a3a1a","#4a6a2a","#8aaa5a"],w:["#4a5a22","#6a7a34","#3a4a1a","#2a3410"],a:"#e8b878"},
+ {id:"fire",name:"TŰZ",m:["#5a1a0a","#d83a10","#ffb040"],w:["#7a1a0a","#e8501c","#c02a0c","#ffe066"],a:"#ffe066"},
+ {id:"ice",name:"JÉG",m:["#3a6a9a","#94c8f0","#ffffff"],w:["#5a8ac0","#cfe8ff","#9cc4e8","#ffffff"],a:"#73eff7"},
+ {id:"stealth",name:"ÉJFEKETE",m:["#0a0a10","#20202c","#4c4c64"],w:["#14141c","#262634","#1c1c28","#0a0a10"],a:"#e43b44"},
+ {id:"emerald",name:"SMARAGD",m:["#0a4a2a","#1fa85a","#8affb8"],w:["#0a3a22","#1a7a44","#12583a","#ffe066"],a:"#ffe066"},
+ {id:"amethyst",name:"AMETISZT",m:["#3a1a6a","#8a4ad8","#dcc0ff"],w:["#2a1254","#5c2a9a","#44207c","#ffe066"],a:"#ffe066"},
+ {id:"rainbow",name:"SZIVÁRVÁNY",m:["#3a4050","#5c6b80","#94a8bc"],w:["#8a4f22","#b8743a","#a8642e","#5c3312"],a:"#ffffff",rainbow:true}
+];
+const GUN_CACHE={};
+function makeGun(k){
   const c=mk(20,54),g=c.getContext("2d");
   const R=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h)};
-  // csövek
+  const[m1,m2,m3]=k.m,[w1,w2,w3,gr]=k.w,O="#1a1c2c";
   [2,11].forEach(x=>{
-    R(x,0,7,32,"#1a1c2c");R(x+1,1,5,31,"#3a4050");R(x+1,1,2,31,"#5c6b80");R(x+2,1,1,31,"#94a8bc");
+    R(x,0,7,32,O);R(x+1,1,5,31,m1);R(x+1,1,2,31,m2);R(x+2,1,1,31,m3);
     R(x+2,1,3,2,"#000");
   });
-  R(9,2,2,30,"#2a2e3a");R(9,0,2,2,"#ffcd75");            // borda + célgömb
-  // fa előagy
-  R(1,16,18,16,"#1a1c2c");R(2,17,16,14,"#8a4f22");R(2,17,16,2,"#b8743a");R(3,17,2,14,"#a8642e");
-  for(let y=21;y<=29;y+=3)R(2,y,16,1,"#5c3312");
-  // agyazat
-  R(0,32,20,10,"#1a1c2c");R(1,33,18,8,"#5c6b80");R(1,33,18,2,"#94a8bc");R(1,39,18,2,"#3a4050");R(8,36,4,2,"#ffcd75");
-  // tus
-  R(3,42,14,12,"#1a1c2c");R(4,42,12,12,"#8a4f22");R(4,42,3,12,"#b8743a");
+  R(9,2,2,30,"#2a2e3a");R(9,0,2,2,k.a);
+  R(1,16,18,16,O);R(2,17,16,14,w1);R(2,17,16,2,w2);R(3,17,2,14,w3);
+  for(let y=21;y<=29;y+=3)R(2,y,16,1,gr);
+  R(0,32,20,10,O);R(1,33,18,8,m2);R(1,33,18,2,m3);R(1,39,18,2,m1);R(8,36,4,2,k.a);
+  R(3,42,14,12,O);R(4,42,12,12,w1);R(4,42,3,12,w2);
+  if(k.rainbow){
+    g.globalCompositeOperation="source-atop";
+    const gd=g.createLinearGradient(0,0,0,54);
+    ["#e43b44","#ef7d57","#ffe066","#38b764","#41a6f6","#8a4ad8","#e43b44"].forEach((col,i)=>gd.addColorStop(i/6,col));
+    g.globalAlpha=.6;g.fillStyle=gd;g.fillRect(0,0,20,54);g.globalAlpha=1;g.globalCompositeOperation="source-over";
+  }
   return c;
-})();
+}
+function gunImg(id){return GUN_CACHE[id]||(GUN_CACHE[id]=makeGun(SKINS.find(k=>k.id===id)||SKINS[0]))}
+let skinId="classic";
 const GUN_LEN=44;
 
 function makeCloud(bumps,w,h){
@@ -664,7 +705,8 @@ let ducks=[],falling=[],parts=[],pending=[],lying=[];
 let spawnTimer=0,reloadTimer=0,overTimer=0,time=0,frame=0;
 let recoil=0,pumpT=0,flashT=0,shake=0,tracer=null;
 const difficulty={value:"normal"};   // easy | normal | extreme
-let sens=1,runDirty=false,lastLockLoss=0;
+let sens=1,runDirty=false,lastLockLoss=0,runCoins=0;
+const COIN={easy:2,normal:5,extreme:7};
 const mouse={x:160,y:100,over:false};
 
 /* Időzítő + napszak-váltás */
@@ -690,6 +732,7 @@ function updateHUD(){
   updateTimerHUD();
   scoreEl.textContent=score.toLocaleString("hu-HU");
   comboEl.textContent=combo+"×";ducksEl.textContent=kills;
+  coinsEl.textContent=fmt(S()?S().coins:0);
   heartEls.forEach((c,i)=>{
     drawHeart(c,i<hp);
     if(i===hp&&hp<prevHp){c.classList.remove("lost");void c.offsetWidth;c.classList.add("lost")}
@@ -756,7 +799,7 @@ function drawGun(){
   const{px,py,a}=aim();
   const off=recoil*7+(pumpT>0?Math.sin((1-pumpT/.3)*Math.PI)*10:0);
   ctx.save();ctx.translate(Math.round(px),Math.round(py));ctx.rotate(a);
-  ctx.drawImage(GUN,-10,-44+Math.round(off));ctx.restore();
+  ctx.drawImage(gunImg(skinId),-10,-44+Math.round(off));ctx.restore();
   if(flashT>0){
     const m=muzzle(),big=flashT>.05,x=Math.round(m.x+Math.sin(m.a)*3),y=Math.round(m.y-Math.cos(m.a)*3);
     const L=big?7:4;
@@ -971,7 +1014,8 @@ function updateDogHUD(){
 
 /* ====== Lövés ====== */
 function shoot(mx,my){
-  if(state!=="play"||paused||ammo<=0)return;
+  if((state!=="play"&&state!=="mini")||paused||ammo<=0)return;
+  if(state==="mini"&&mini.phase!=="aim")return;
   ammo--;Snd.shot();
   const m=muzzle(),dx=Math.sin(m.a),dy=-Math.cos(m.a);
   recoil=1;shake=.1;flashT=.09;screenFlash=.05;tracer={x0:m.x,y0:m.y,x1:mx,y1:my,t:.05};
@@ -985,6 +1029,7 @@ function shoot(mx,my){
   const a=aim();
   P({x:a.px+Math.sin(a.a)*30,y:a.py-Math.cos(a.a)*30,vx:Math.cos(a.a)*rand(25,45),vy:-rand(35,60),life:.9,c:"#e8b040",s:2,g:320});
   // találat vizsgálata
+  if(state==="mini"){miniHit(mx,my);updateHUD();return}
   let hit=-1,bestD=Infinity;
   ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)&&dist<bestD){bestD=dist;hit=i}});
   if(hit>=0)killDuck(hit);else miss(mx,my);
@@ -1001,6 +1046,8 @@ function killDuck(i){
   const comboBonus=Math.min(1000,combo*75);
   const pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
   score+=pts;kills++;runDirty=true;Snd.hit();Snd.fall();
+  {const cn=COIN[difficulty.value]||5,sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
+   pop("+"+cn+" COIN",d.x,d.y+22,"#ffcd75");setTimeout(Snd.coin,160)}
   hitstop=.06;screenFlash=.06;
   const bonus=kills%BONUS_EVERY===0,msg=pick(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"])+"  +"+pts;
   if(bonus){
@@ -1042,7 +1089,7 @@ function reload(){ammo=3;pumpT=.3;Snd.pump();updateHUD()}
 
 /* ====== Játékmenet ====== */
 function resetRun(){
-  score=0;combo=0;kills=0;ammo=3;hp=3;prevHp=3;
+  score=0;combo=0;kills=0;ammo=3;hp=3;prevHp=3;runCoins=0;
   timeLeft=START_TIME;overReason="hp";lastSec=-1;hitstop=0;screenFlash=0;
   tint[0]=tint[1]=tint[2]=255;sunY=SUNY[0];
   ducks=[];falling=[];parts=[];pending=[];lying=[];spawnTimer=0;reloadTimer=0;overTimer=0;paused=false;
@@ -1075,8 +1122,8 @@ function toTitle(){
   showMenu("title");
 }
 function openPause(){
-  if(state!=="play"||paused)return;
-  paused=true;menuNote="";showMenu("pause");
+  if((state!=="play"&&state!=="mini")||paused)return;
+  paused=true;menuNote="";showMenu(state==="mini"?"minipause":"pause");
 }
 function resumeGame(){hideMenu();paused=false;last=performance.now();lock()}
 function showOver(){
@@ -1089,19 +1136,120 @@ function showOver(){
   showMenu("over",nb);
 }
 
+/* ====== Minijáték: SZERENCSE KACSA – 10 kacsa közül egyet lőhetsz le, a nyeremény titkos ====== */
+const MINI_PRIZES=[0,0,0,5,5,10,10,15,15,50],MINI_COST=10;
+const MINI_COL={0:"#94a8bc",5:"#f4f4f4",10:"#73eff7",15:"#a7f070",50:"#ffe066"};
+const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",
+ 5:"111100111001111",6:"111100111101111",7:"111001001001001",8:"111101111101111",9:"111101111001111"};
+let mini={ducks:[],phase:"aim",t:0,prize:null,rt:0};
+function drawNum(str,cx,y,col,sc){
+  const w=(str.length*4-1)*sc,x0=Math.round(cx-w/2);
+  for(let pass=0;pass<2;pass++){
+    ctx.fillStyle=pass?col:"#000";
+    for(let n=0;n<str.length;n++){
+      const rows=DIG[str[n]];
+      for(let i=0;i<15;i++)if(rows[i]==="1"){
+        const px=x0+n*4*sc+(i%3)*sc,py=y+((i/3)|0)*sc;
+        if(pass)ctx.fillRect(px,py,sc,sc);
+        else ctx.fillRect(px-1,py-1,sc+2,sc+2);
+      }
+    }
+  }
+}
+function startMini(){
+  const s=S();if(!s)return;
+  if(s.coins<MINI_COST){menuNote="NINCS ELÉG COIN – A BELÉPŐ "+MINI_COST+" COIN";Snd.deny();showMenu("minimenu");return}
+  s.coins-=MINI_COST;saveSlots();
+  hideMenu();resetRun();ammo=3;
+  const pr=MINI_PRIZES.slice();
+  for(let i=pr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pr[i],pr[j]]=[pr[j],pr[i]]}
+  mini={phase:"aim",t:0,prize:null,rt:0,ducks:pr.map(p=>{
+    const sp=rand(26,46),an=rand(0,Math.PI*2);
+    return{x:rand(30,VW-30),y:rand(26,GY-26),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp*.6,prize:p,face:1,t:rand(0,5),ph:rand(0,6.28),dead:false};
+  })};
+  state="mini";updateHUD();Snd.start();showToast("VÁLASSZ EGY KACSÁT!");lock();
+}
+function updateMini(dt){
+  mini.t+=dt;
+  for(const d of mini.ducks){
+    d.t+=dt;
+    if(d.dead){d.vy+=280*dt;d.y+=d.vy*dt;d.x+=d.vx*dt;d.vx*=.99;continue}
+    d.vy+=Math.sin(d.t*1.3+d.ph)*30*dt;
+    const sp=Math.hypot(d.vx,d.vy),mx=52;if(sp>mx){d.vx*=mx/sp;d.vy*=mx/sp}
+    d.x+=d.vx*dt;d.y+=d.vy*dt;
+    if(d.x<12){d.x=12;d.vx=Math.abs(d.vx)}else if(d.x>VW-12){d.x=VW-12;d.vx=-Math.abs(d.vx)}
+    if(d.y<18){d.y=18;d.vy=Math.abs(d.vy)}else if(d.y>GY-16){d.y=GY-16;d.vy=-Math.abs(d.vy)}
+    if(Math.abs(d.vx)>3)d.face=d.vx<0?-1:1;
+  }
+  if(mini.phase==="reveal"){mini.rt-=dt;if(mini.rt<=0)endMini()}
+}
+function drawMini(){
+  for(const d of mini.ducks)if(!d.dead)drawShadow(d.x,d.y);
+  for(const d of mini.ducks){
+    if(d.dead){drawSpr(DUCKS[0],d.x,d.y,d.face,true);continue}
+    drawSpr(DUCKS[[0,1,2,1][Math.floor(d.t*9)%4]],d.x,d.y,d.face,false);
+    if(mini.phase==="aim"){
+      const by=Math.round(Math.sin(d.t*3+d.ph)*1.5);
+      glyph(G_Q,d.x-2,d.y-24+by,"#ffe066");
+    }else{
+      const col=MINI_COL[d.prize];
+      if(d.prize===50&&((frame>>2)&1))continue;
+      drawNum(String(d.prize),d.x,d.y-22,col,2);
+    }
+  }
+}
+function miniHit(mx,my){
+  if(mini.phase!=="aim")return;
+  let hit=null,bd=1e9;
+  for(const d of mini.ducks){if(d.dead)continue;const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)&&dist<bd){bd=dist;hit=d}}
+  if(!hit){
+    for(let i=0;i<10;i++){const a=rand(0,6.28),sp=rand(25,80);P({x:mx,y:my,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(.25,.5),c:pick(["#ffffff","#ffe066","#ffa020"]),s:pick([1,2]),g:60,dr:1.5})}
+    Snd.miss();
+    if(ammo<=0){mini.prize=0;mini.phase="reveal";mini.rt=2.4;showToast("ELFOGYTAK A LÖVÉSEK!  0 COIN","#ff6a6a")}
+    else showToast("MELLÉ!  MÉG "+ammo+" LÖVÉSED VAN","#ff6a6a");
+    return;
+  }
+  hit.dead=true;hit.vy=-35;hit.vx*=.2;
+  const p=hit.prize,s=S();
+  mini.prize=p;mini.phase="reveal";mini.rt=2.6;
+  if(s){s.coins+=p;saveSlots()}
+  updateHUD();Snd.hit();Snd.fall();hitstop=.06;screenFlash=.06;
+  for(let n=0;n<22;n++){const a=rand(0,6.28),sp=rand(20,90);
+    P({x:hit.x,y:hit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-20,life:rand(.5,1.1),c:pick(["#b06a30","#73401c","#f4f4f4","#38b764","#e8b878"]),s:pick([1,2,2]),g:90,dr:1.2})}
+  if(p===0){Snd.deny();showToast("ÜRES KACSA…  0 COIN","#94a8bc");pop("0 COIN",hit.x,hit.y-10,"#94a8bc")}
+  else{
+    [0,110,220].slice(0,p>=50?3:p>=15?3:p>=10?2:1).forEach(t=>setTimeout(Snd.coin,t+150));
+    pop("+"+p+" COIN",hit.x,hit.y-10,"#ffe066");
+    if(p>=50){
+      setTimeout(Snd.bonus,250);screenFlash=.2;showToast("JACKPOT!  +50 COIN","#ffe066");
+      for(let n=0;n<50;n++){const a=rand(0,6.28),sp=rand(40,160);
+        P({x:hit.x,y:hit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,life:rand(.7,1.4),c:pick(["#ffe066","#ffcd75","#ffffff","#ef7d57"]),s:pick([1,2,3]),g:120,dr:.8})}
+    }else showToast("+"+p+" COIN!","#a7f070");
+  }
+}
+function endMini(){state="menu";resetRun();showMenu("miniover")}
+function leaveMini(){state="menu";resetRun();showMenu("slotmenu")}
+
 /* ====== Mentési helyek (3 slot): beállítások, statisztika, félbehagyott játék ====== */
 const SLOT_KEY="dfSlots1";
+function normSlot(s){
+  s.coins=Math.max(0,+s.coins||0);
+  if(!Array.isArray(s.owned))s.owned=[];
+  if(!s.owned.includes("classic"))s.owned.push("classic");
+  if(!s.owned.includes(s.skin))s.skin="classic";
+  return s;
+}
 const DN={easy:"KÖNNYŰ",normal:"NORMÁL",extreme:"EXTRÉM"};
-let slots=[null,null,null],cur=-1,storageOK=true,menuNote="",menuBack=null,menuKind="title",settingsFrom="slotmenu",diffFrom="slotmenu";
+let slots=[null,null,null],cur=-1,storageOK=true,menuNote="",menuBack=null,menuKind="title",storeFrom="slotmenu",settingsFrom="slotmenu",diffFrom="slotmenu";
 try{
   localStorage.setItem("dfTest","1");localStorage.removeItem("dfTest");
   const raw=JSON.parse(localStorage.getItem(SLOT_KEY)||"null");
-  if(Array.isArray(raw))slots=[0,1,2].map(i=>raw[i]&&raw[i].settings&&raw[i].stats?raw[i]:null);
+  if(Array.isArray(raw))slots=[0,1,2].map(i=>raw[i]&&raw[i].settings&&raw[i].stats?normSlot(raw[i]):null);
 }catch(e){storageOK=false}
 function saveSlots(){try{localStorage.setItem(SLOT_KEY,JSON.stringify(slots))}catch(e){storageOK=false}}
 function newSlot(i){
   return{name:"SLOT "+(i+1),created:Date.now(),played:0,
-    settings:{sens:1,diff:"normal"},stats:{best:0,ducks:0,games:0},run:null};
+    settings:{sens:1,diff:"normal"},stats:{best:0,ducks:0,games:0},run:null,coins:0,owned:["classic"],skin:"classic"};
 }
 function S(){return cur>=0?slots[cur]:null}
 function applySlot(){
@@ -1109,6 +1257,7 @@ function applySlot(){
   const st=s.settings;
   sens=st.sens>=.3&&st.sens<=3?st.sens:1;
   difficulty.value=DN[st.diff]?st.diff:"normal";
+  skinId=s.skin;
 }
 function saveRun(){
   const s=S();if(!s)return false;
@@ -1140,7 +1289,7 @@ function slotCard(i){
     b.innerHTML='<div class="num">'+(i+1)+'</div><div class="nm">ÜRES SLOT</div><div class="ln">Kattints egy új profil létrehozásához.</div>';
   }else{
     let h='<div class="num">'+(i+1)+'</div><div class="nm">'+s.name+'</div>'+
-      '<div class="ln">REKORD: <b>'+fmt(s.stats.best)+'</b><br>KACSA: '+fmt(s.stats.ducks)+'<br>JÁTÉK: '+s.stats.games+'</div>';
+      '<div class="ln">COIN: <b>'+fmt(s.coins)+'</b><br>REKORD: <b>'+fmt(s.stats.best)+'</b><br>KACSA: '+fmt(s.stats.ducks)+'<br>JÁTÉK: '+s.stats.games+'</div>';
     if(s.run)h+='<div class="run">MENTETT JÁTÉK<br>'+fmt(s.run.score)+' PONT • '+DN[s.run.diff]+'</div>';
     b.innerHTML=h;
   }
@@ -1163,13 +1312,36 @@ function diffCard(k,title,desc,last){
   };
   return b;
 }
+function skinCard(k){
+  const s=S(),owned=s.owned.includes(k.id),eq=s.skin===k.id;
+  const b=document.createElement("button");
+  b.className="skincard"+(eq?" eq":owned?" own":"");
+  const pv=mk(54,20),g=pv.getContext("2d");g.translate(54,0);g.rotate(Math.PI/2);g.drawImage(gunImg(k.id),0,0);
+  pv.className="pv";b.append(pv);
+  const nm=document.createElement("div");nm.className="nm";nm.textContent=k.name;b.append(nm);
+  const st=document.createElement("div");st.className="st";
+  st.textContent=eq?"FELSZERELVE":owned?"FELSZEREL":(k.id==="classic"?"ALAP":SKIN_PRICE+" COIN");
+  if(!owned)st.classList.add(s.coins>=SKIN_PRICE?"can":"cant");
+  b.append(st);
+  b.onclick=()=>{
+    b.blur();
+    if(eq)return;
+    if(!owned){
+      if(s.coins<SKIN_PRICE){menuNote="MÉG "+fmt(SKIN_PRICE-s.coins)+" COIN KELL A(Z) "+k.name+" SKINHEZ";Snd.deny();storeRefresh();return}
+      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote="MEGVETTED: "+k.name;
+    }else menuNote="FELSZERELVE: "+k.name;
+    s.skin=k.id;skinId=k.id;saveSlots();updateHUD();storeRefresh();
+  };
+  return b;
+}
+function storeRefresh(){const y=panel.scrollTop;showMenu("store");panel.scrollTop=y}
 function showMenu(kind,nb){
   menuKind=kind;releaseLock();
   const inTitle=state==="menu";
   overlay.classList.toggle("title",inTitle);
   document.body.classList.toggle("titlemode",inTitle);
   panel.classList.toggle("plain",kind==="title");
-  panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help");
+  panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help"||kind==="store");
   settingsEl.style.display=kind==="settings"?"block":"none";
   ovHint.style.display="none";
   ovHint.innerHTML=document.body.classList.contains("touch")?HINT_TOUCH:HINT_KB;
@@ -1177,7 +1349,7 @@ function showMenu(kind,nb){
   ovBest.textContent=menuNote;menuNote="";
   menuBack=null;
   const s=S();
-  const stat=()=>"Pontszám: <b>"+fmt(score)+"</b> • Kacsa: <b>"+kills+"</b> • "+DN[difficulty.value];
+  const stat=()=>"Pontszám: <b>"+fmt(score)+"</b> • Kacsa: <b>"+kills+"</b> • "+DN[difficulty.value]+" • +"+runCoins+" COIN";
   if(kind==="title"){
     ovTitle.innerHTML="DUCK <br>FLIGHT";
     ovText.textContent="FLIGHT FRENZY  •  1991";
@@ -1196,11 +1368,13 @@ function showMenu(kind,nb){
     menuBack=()=>showMenu("title");
   }else if(kind==="slotmenu"&&s){
     ovTitle.textContent="SLOT "+(cur+1);
-    ovText.innerHTML="REKORD: <b>"+fmt(s.stats.best)+"</b> • KACSA: <b>"+fmt(s.stats.ducks)+"</b> • JÁTÉK: <b>"+s.stats.games+"</b>"+
+    ovText.innerHTML="COIN: <b>"+fmt(s.coins)+"</b> • REKORD: <b>"+fmt(s.stats.best)+"</b> • KACSA: <b>"+fmt(s.stats.ducks)+"</b> • JÁTÉK: <b>"+s.stats.games+"</b>"+
       (s.run?"<br>MENTETT JÁTÉK: <b>"+fmt(s.run.score)+"</b> pont • <b>"+s.run.kills+"</b> kacsa • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> hátra":"");
     if(s.run)menuBtns.append(mkBtn("FOLYTATÁS",()=>startGame(s.run)));
     menuBtns.append(
       mkBtn("ÚJ JÁTÉK",()=>{diffFrom="slotmenu";showMenu("difficulty")}),
+      mkBtn("SZERENCSE JÁTÉK",()=>showMenu("minimenu")),
+      mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),
       mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="slotmenu";showMenu("settings")}),
       mkBtn("SLOT TÖRLÉSE",()=>showMenu("confirmDelete")),
       mkBtn("VISSZA",()=>showMenu("slots")));
@@ -1217,6 +1391,33 @@ function showMenu(kind,nb){
     screenBody.append(wrap);
     menuBtns.append(mkBtn("VISSZA",()=>showMenu(diffFrom)));
     menuBack=()=>showMenu(diffFrom);
+  }else if(kind==="minimenu"&&s){
+    ovTitle.innerHTML="SZERENCSE <br>KACSA";
+    ovText.innerHTML="Tíz kacsa repked a képernyőn, mindegyikben <b>titkos nyeremény</b> van. <b>Egyet</b> lőhetsz le a háromból: azt a nyereményt viszed el!"+
+      "<br><br>3 kacsa: <b>0</b> • 2 kacsa: <b>5</b> • 2 kacsa: <b>10</b> • 2 kacsa: <b>15</b> • 1 kacsa: <b>50</b> COIN"+
+      "<br><br>BELÉPŐ: <b>"+MINI_COST+" COIN</b> • EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>";
+    menuBtns.append(mkBtn("INDÍTÁS ("+MINI_COST+" COIN)",startMini),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+    menuBack=()=>showMenu("slotmenu");
+  }else if(kind==="minipause"){
+    ovTitle.textContent="SZÜNET";
+    ovText.innerHTML="Ha kilépsz, a belépő (<b>"+MINI_COST+" COIN</b>) elvész.";
+    menuBtns.append(mkBtn("FOLYTATÁS",resumeGame),mkBtn("KILÉPÉS",leaveMini));
+    menuBack=resumeGame;
+  }else if(kind==="miniover"&&s){
+    const p=mini.prize||0;
+    ovTitle.innerHTML=p>=50?"JACKPOT!":p>0?"NYERTÉL!":"SAJNOS <br>NEM";
+    ovText.innerHTML=(p>0?"Nyeremény: <b>+"+p+" COIN</b>":"Üres kacsát lőttél.")+" • Belépő: -"+MINI_COST+
+      "<br>EGYENLEGED: <b>"+fmt(s.coins)+" COIN</b>";
+    menuBtns.append(mkBtn("ÚJRA ("+MINI_COST+" COIN)",startMini),mkBtn("SKIN BOLT",()=>{storeFrom="slotmenu";showMenu("store")}),mkBtn("VISSZA",()=>showMenu("slotmenu")));
+    menuBack=()=>showMenu("slotmenu");
+  }else if(kind==="store"&&s){
+    ovTitle.textContent="SKIN BOLT";
+    ovText.innerHTML="EGYENLEG: <b>"+fmt(s.coins)+" COIN</b> • minden skin <b>"+SKIN_PRICE+" COIN</b><br>Coin: kacsánként KÖNNYŰ 2, NORMÁL 5, EXTRÉM 7.";
+    const wrap=document.createElement("div");wrap.className="skins";
+    SKINS.forEach(k=>wrap.append(skinCard(k)));
+    screenBody.append(wrap);
+    menuBtns.append(mkBtn("VISSZA",()=>showMenu(storeFrom)));
+    menuBack=()=>showMenu(storeFrom);
   }else if(kind==="settings"){
     ovTitle.textContent="BEÁLLÍTÁSOK";
     ovText.textContent="SLOT "+(cur+1)+" • a beállítások slotonként mentődnek";
@@ -1235,6 +1436,7 @@ function showMenu(kind,nb){
     menuBtns.append(
       mkBtn("FOLYTATÁS",resumeGame),
       mkBtn("MENTÉS",()=>{menuNote=saveRun()?"MENTVE: SLOT "+(cur+1):"NEM SIKERÜLT A MENTÉS";showMenu("pause")}),
+      mkBtn("SKIN BOLT",()=>{storeFrom="pause";showMenu("store")}),
       mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="pause";showMenu("settings")}),
       mkBtn("ÚJRAKEZDÉS",()=>{diffFrom="pause";showMenu("difficulty")}),
       mkBtn("FŐMENÜ",()=>runDirty?showMenu("confirmExit"):toTitle()));
@@ -1260,6 +1462,7 @@ function showMenu(kind,nb){
     ovBest.textContent=s?((nb?"ÚJ REKORD: ":"REKORD: ")+fmt(s.stats.best)):"";
     menuBtns.append(
       mkBtn("ÚJRA",()=>{diffFrom="over";showMenu("difficulty")}),
+      mkBtn("SKIN BOLT",()=>{storeFrom="over";showMenu("store")}),
       mkBtn("BEÁLLÍTÁSOK",()=>{settingsFrom="over";showMenu("settings")}),
       mkBtn("FŐMENÜ",toTitle));
   }
@@ -1300,6 +1503,7 @@ function update(dt){
     }
   }
   updateDog(dt);updateDogHUD();
+  if(state==="mini"){updateMini(dt);return}
   if(state==="menu")return;
 
   if(reloadTimer>0){reloadTimer-=dt;if(reloadTimer<=0){reload();showToast("ÚJRATÖLTÉS")}}
@@ -1375,13 +1579,14 @@ function render(){
   }
   for(const f of falling)drawSpr(f.flash>0?DUCKS_W[0]:DUCKS[0],f.x+(f.flash>0?0:Math.round(Math.sin(f.y*.4))),f.y,f.face,f.flash<=0);
   for(const d of ducks)drawDuck(d);
+  if(state==="mini")drawMini();
   ctx.drawImage(bgFront,0,0);
   for(const b of grass){
     const sw=Math.round(Math.sin(time*2.4+b.x*.18)*1.4);
     ctx.fillStyle=b.c;ctx.fillRect(b.x,H-b.h+1,2,b.h-1);
     ctx.fillStyle="#5cc040";ctx.fillRect(b.x+sw,H-b.h,2,1);
   }
-  drawDog();
+  if(state!=="mini")drawDog();
   if(tint[0]<250||tint[1]<250||tint[2]<250){                       // napszak színezése
     ctx.globalCompositeOperation="multiply";
     ctx.fillStyle="rgb("+Math.round(tint[0])+","+Math.round(tint[1])+","+Math.round(tint[2])+")";
@@ -1401,7 +1606,8 @@ let last=performance.now();
 function loop(now){
   const dt=Math.max(0,Math.min(.033,(now-last)/1000));last=now;
   if(!paused){if(hitstop>0)hitstop-=dt;else update(dt)}
-  Snd.mode(state==="menu"?"title":paused?"pause":state==="play"?"game":"over");Snd.inten(Math.min(4,Math.floor(kills/BONUS_EVERY)));
+  document.body.classList.toggle("minimode",state==="mini");
+  Snd.mode(state==="menu"?"title":paused?"pause":(state==="play"||state==="mini")?"game":"over");Snd.inten(Math.min(4,Math.floor(kills/BONUS_EVERY)));
   if(state==="menu")renderTitle();else render();
   requestAnimationFrame(loop);
 }
@@ -1518,6 +1724,9 @@ const Snd=(()=>{
     bark(n){if(!ok())return;const t=ac.currentTime;
       for(let i=0;i<(n||1);i++){const s=t+i*.2,p=.9+Math.random()*.2;
         noise(s,.11,.55,"bandpass",900*p,500,0);tone(330*p,s,.13,"square",.2,0,150*p);tone(660*p,s,.08,"sawtooth",.08,0,300)}},
+    coin(){if(!ok())return;const t=ac.currentTime;tone(1319,t,.08,"square",.1);tone(1760,t+.07,.2,"square",.1)},
+    buy(){if(!ok())return;const t=ac.currentTime;[659,880,1175,1568].forEach((f,i)=>tone(f,t+i*.06,.15,"square",.14))},
+    deny(){if(!ok())return;const t=ac.currentTime;tone(200,t,.12,"square",.16);tone(150,t+.12,.2,"square",.16)},
     ding(){if(!ok())return;const t=ac.currentTime;tone(988,t,.25,"sine",.3);tone(1319,t+.1,.4,"sine",.3)},
     miss(){if(!ok())return;const t=ac.currentTime;
       tone(170,t,.3,"sawtooth",.28,0,70);noise(t,.2,.25,"lowpass",800,200)},
@@ -1528,7 +1737,7 @@ const Snd=(()=>{
   };
   return api;
 })();
-document.addEventListener("click",e=>{if(e.target.closest(".btn,.slotcard,.diffcard,.segbtn"))Snd.click()});
+document.addEventListener("click",e=>{if(e.target.closest(".btn,.slotcard,.diffcard,.segbtn,.skincard"))Snd.click()});
 addEventListener("pointerdown",()=>Snd.init(),true);
 addEventListener("keydown",()=>Snd.init(),true);
 
@@ -1554,7 +1763,7 @@ function releaseLock(){if(document.pointerLockElement===canvas)document.exitPoin
 document.addEventListener("pointerlockchange",()=>{
   if(document.pointerLockElement!==canvas){
     lastLockLoss=performance.now();
-    if(state==="play"&&!paused)openPause();          // ESC a játék közben → szünet menü
+    if((state==="play"||state==="mini")&&!paused)openPause();          // ESC a játék közben → szünet menü
   }
 });
 addEventListener("mousemove",e=>{
@@ -1584,7 +1793,7 @@ addEventListener("keydown",e=>{
   if(e.key.toLowerCase()==="m"){Snd.mute();syncMute()}
   if(e.key==="Escape"){
     if(performance.now()-lastLockLoss<250)return;     // ugyanaz az ESC már kilépett az egérzárból
-    if(state==="play"&&!paused)openPause();
+    if((state==="play"||state==="mini")&&!paused)openPause();
     else if(menuBack)menuBack();
   }
 });
