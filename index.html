@@ -38,7 +38,7 @@ body{position:fixed;inset:0}
 @keyframes hurt{0%{opacity:.5}100%{opacity:0}}
 
 /* HUD */
-#hud{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));z-index:5;display:flex;gap:12px;flex-wrap:wrap;pointer-events:none}
+#hud{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));z-index:5;display:flex;gap:12px;flex-wrap:wrap;pointer-events:none;max-width:calc(100% - 220px)}
 .card{background:var(--ink);border:3px solid #f4f4f4;box-shadow:inset 2px 2px 0 rgba(255,255,255,.14),inset -2px -2px 0 rgba(0,0,0,.4),0 0 0 3px #000,4px 4px 0 3px rgba(0,0,0,.45);
  padding:8px 10px;min-width:92px}
 .label{font-size:8px;color:#94b0c2;margin-bottom:8px;letter-spacing:1px}
@@ -122,6 +122,10 @@ body.touch #reloadBtn{display:block}
 #dogBtn{position:fixed;right:calc(max(14px,env(safe-area-inset-right)) + 74px);bottom:max(14px,env(safe-area-inset-bottom));z-index:6;
  display:none;width:64px;height:64px;padding:0;margin:0;font-size:8px;line-height:1.4}
 body.touch #dogBtn{display:block}
+#abilityBtn{position:fixed;right:calc(max(14px,env(safe-area-inset-right)) + 148px);bottom:max(14px,env(safe-area-inset-bottom));z-index:6;
+ display:none;width:64px;height:64px;padding:0;margin:0;font-size:8px;line-height:1.4;opacity:.85;background:#73eff7;box-shadow:inset -3px -3px 0 #2a9ac0,inset 3px 3px 0 #d8ffff}
+body.touch.hasab #abilityBtn{display:block}
+body.minimode #abilityBtn{display:none!important}
 #reloadBtn,#dogBtn{opacity:.85}
 /* érintős eszközön: könnyebb effektek a folyamatos futáshoz */
 body.touch #game{filter:none}
@@ -132,7 +136,7 @@ body.touch #crt:after{display:none}
  text-align:center;padding:24px;font-size:14px;line-height:2.2;text-shadow:3px 3px 0 #000}
 @media (orientation:portrait){#rotate{display:flex}}
 @media (max-height:520px),(max-width:900px){
- #hud{left:max(8px,env(safe-area-inset-left));top:6px;gap:6px}
+ #hud{left:max(8px,env(safe-area-inset-left));top:6px;gap:6px;max-width:calc(100% - 150px)}
  .card{padding:4px 6px;min-width:0;border-width:2px;box-shadow:0 0 0 2px #000,3px 3px 0 2px rgba(0,0,0,.45)}
  .label{font-size:6px;margin-bottom:4px}
  .value{font-size:10px}
@@ -161,6 +165,7 @@ body.touch #crt:after{display:none}
  .pop{font-size:10px}
  #reloadBtn{width:52px;height:52px;font-size:6px}
  #dogBtn{width:52px;height:52px;font-size:6px;right:calc(max(14px,env(safe-area-inset-right)) + 62px)}
+ #abilityBtn{width:52px;height:52px;font-size:6px;right:calc(max(14px,env(safe-area-inset-right)) + 120px)}
 }
 /* Főmenü / slotok / nehézség */
 #titleArt{display:none;width:100vw;height:100vh;height:100dvh;image-rendering:crisp-edges;image-rendering:pixelated;filter:contrast(1.08) saturate(1.18)}
@@ -196,6 +201,7 @@ body.touch #titleArt{filter:none}
 .skincard .pv{width:108px;height:40px;image-rendering:pixelated;display:block;margin:0 auto 8px;max-width:100%}
 .skincard .nm{font-size:8px;margin-bottom:8px;color:#fff}
 .skincard .st{font-size:7px;color:#94b0c2}
+.skincard .pk{font-size:6px;line-height:1.7;color:#a7f070;margin-bottom:8px;min-height:20px}
 .skincard .st.can{color:var(--gold)}.skincard .st.cant{color:#ff6a6a}
 .skincard.eq .st{color:#a7f070}.skincard.own .st{color:#73eff7}
 .help{text-align:left;margin-top:14px}
@@ -217,6 +223,7 @@ body.touch #titleArt{filter:none}
  .skincard .pv{width:81px;height:30px;margin-bottom:4px}
  .skincard .nm{font-size:6px;margin-bottom:3px}
  .skincard .st{font-size:5px}
+ .skincard .pk{font-size:4.5px;line-height:1.5;margin-bottom:3px;min-height:14px}
 }
 </style>
 </head>
@@ -232,6 +239,7 @@ body.touch #titleArt{filter:none}
   <div class="card"><div class="label" data-en="DUCKS">KACSA</div><div class="value" id="ducks">0</div></div>
   <div class="card" id="coinCard"><div class="label">COIN</div><div class="value" id="coins">0</div></div>
   <div class="card" id="shellCard"><div class="label" data-en="AMMO">LŐSZER</div><div id="shells"></div></div>
+  <div class="card ready" id="skillCard" style="display:none"><div class="label" id="skillLbl">SKILL</div><div class="value" id="skillVal">-</div></div>
   <div class="card ready" id="dogCard"><div class="label" data-en='DOG<span class="kb"> [Q]</span>'>KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
@@ -242,6 +250,7 @@ body.touch #titleArt{filter:none}
 <div id="crt"></div>
 <button class="btn" id="reloadBtn" data-en="RE-<br>LOAD">ÚJRA-<br>TÖLT</button>
 <button class="btn" id="dogBtn" data-en="DOG">KUTYA</button>
+<button class="btn" id="abilityBtn" data-en="SLOW">LASSÍT</button>
 <div id="rotate" data-en="ROTATE YOUR<br>DEVICE TO<br>LANDSCAPE!">FORGASD FEKVŐ<br>HELYZETBE<br>A KÉSZÜLÉKET!</div>
 
 <div id="start">
@@ -296,7 +305,7 @@ const scoreEl=$("score"),coinsEl=$("coins"),comboEl=$("combo"),ducksEl=$("ducks"
       menuBtn=$("menuBtn"),fsBtn=$("fsBtn"),reloadBtn=$("reloadBtn"),settingsEl=$("settings"),menuBtns=$("menuBtns"),
       sensEl=$("sens"),sensVal=$("sensVal"),panel=document.querySelector(".panel"),screenBody=$("screenBody"),titleArt=$("titleArt"),tctx=titleArt.getContext("2d"),
       timerEl=$("timer"),timeCard=$("timeCard"),
-      dogBtn=$("dogBtn"),dogCard=$("dogCard"),dogVal=$("dogVal");
+      dogBtn=$("dogBtn"),skillCard=$("skillCard"),skillLbl=$("skillLbl"),skillVal=$("skillVal"),dogCard=$("dogCard"),dogVal=$("dogVal");
 
 /* ====== Alapok: belső felbontás 200 sor magas (VGA-hangulat), a szélesség az ablakhoz igazodik ====== */
 const H=200,GY=118,K=.2;          // GY = horizont/talaj vonala, K = sebesség-skála
@@ -415,6 +424,23 @@ function makeGun(k){
 function gunImg(id){return GUN_CACHE[id]||(GUN_CACHE[id]=makeGun(SKINS.find(k=>k.id===id)||SKINS[0]))}
 let skinId="classic";
 const SKN_EN={classic:"CLASSIC",gold:"GOLD",neon:"NEON",pink:"PINK",camo:"CAMO",fire:"FIRE",ice:"ICE",stealth:"STEALTH",emerald:"EMERALD",amethyst:"AMETHYST",rainbow:"RAINBOW"};
+const PERKS={
+ classic:{hu:"—",en:"—"},
+ gold:{hu:"+50% PONT MINDEN KACSÁÉRT",en:"+50% SCORE PER DUCK"},
+ neon:{hu:"KUTYA 1.8× GYORSABB, 15 MP TÖLTÉS",en:"DOG 1.8× FASTER, 15 S COOLDOWN"},
+ pink:{hu:"+1 MP IDŐ MINDEN KACSÁÉRT",en:"+1 S TIME PER DUCK"},
+ camo:{hu:"NAGYOBB TALÁLATI ZÓNA",en:"BIGGER HIT AREA"},
+ fire:{hu:"ROBBANÁS: A KÖZELI KACSÁK IS LEESNEK",en:"BLAST: NEARBY DUCKS FALL TOO"},
+ ice:{hu:"[E] IDŐLASSÍTÁS 5 MP (25 MP TÖLTÉS)",en:"[E] SLOW TIME 5 S (25 S COOLDOWN)"},
+ stealth:{hu:"5 TALÁLAT = PAJZS A KÖVETKEZŐ MELLÉLÖVÉS ELLEN",en:"5 HITS = SHIELD AGAINST THE NEXT MISS"},
+ emerald:{hu:"2× COIN MINDEN KACSÁÉRT",en:"2× COINS PER DUCK"},
+ amethyst:{hu:"5 TÖLTÉNY, GYORS ÚJRATÖLTÉS",en:"5 SHELLS, FAST RELOAD"},
+ rainbow:{hu:"15% ESÉLY: ×3 PONT ÉS ×2 COIN",en:"15% CHANCE: ×3 SCORE & ×2 COINS"}
+};
+const perkText=id=>(PERKS[id]||PERKS.classic)[LANG];
+let slowT=0,abCd=0,shield=false,kSince=0;
+const maxAmmo=()=>state==="mini"?3:skinId==="amethyst"?5:3;
+const dogCdT=()=>skinId==="neon"?15:DOG_CD,dogRun=()=>skinId==="neon"?DOG_RUN*1.8:DOG_RUN;
 const skinName=k=>LANG==="en"?SKN_EN[k.id]:k.name;
 const GUN_LEN=44;
 
@@ -742,6 +768,7 @@ for(let i=0;i<3;i++){
   const c=mk(11,11);c.height=10;c.className="heart";heartsEl.appendChild(c);heartEls.push(c);
   const s=document.createElement("span");s.className="shell";shellsEl.appendChild(s);shellEls.push(s);
 }
+for(let i=3;i<5;i++){const s=document.createElement("span");s.className="shell";shellsEl.appendChild(s);shellEls.push(s)}
 function drawHeart(c,full){const g=c.getContext("2d");g.clearRect(0,0,11,10);g.drawImage(full?HEART_F:HEART_E,0,0)}
 function updateHUD(){
   updateTimerHUD();
@@ -753,7 +780,7 @@ function updateHUD(){
     if(i===hp&&hp<prevHp){c.classList.remove("lost");void c.offsetWidth;c.classList.add("lost")}
   });
   prevHp=hp;
-  shellEls.forEach((s,i)=>s.classList.toggle("empty",i>=ammo));
+  shellEls.forEach((s,i)=>{s.style.display=i<maxAmmo()?"":"none";s.classList.toggle("empty",i>=ammo)});
 }
 function showToast(t,color){
   toast.textContent=t;toast.style.color=color||"#ffe066";toast.style.opacity=1;
@@ -968,7 +995,7 @@ function callDog(){
   if(dog.mode==="fetch"||dog.mode==="pick"){showToast(T("A KUTYA DOLGOZIK!","THE DOG IS WORKING!"),"#94b0c2");return}
   if(dog.cd>0){showToast(T("A KUTYA PIHEN…  ","THE DOG IS RESTING…  ")+Math.ceil(dog.cd)+T(" MP"," S"),"#94b0c2");return}
   if(!lying.length){showToast(T("NINCS KACSA A FÜVÖN!","NO DUCKS IN THE GRASS!"),"#94b0c2");return}
-  dog.cd=DOG_CD;dog.alert=.6;Snd.bark(2);dog.carry=false;dog.rt=null;dog.sniff=0;
+  dog.cd=dogCdT();dog.alert=.6;Snd.bark(2);dog.carry=false;dog.rt=null;dog.sniff=0;
   pickTarget();updateDogHUD();
 }
 function dogGrab(){
@@ -996,14 +1023,14 @@ function updateDog(dt){
     if(Math.abs(mouse.x-dog.x)>10)dog.face=mouse.x>dog.x?1:-1;      // a célkereszt felé figyel
   }else if(m==="fetch"){
     if(!dog.tgt||!lying.includes(dog.tgt)){pickTarget();return}
-    dogMove(dog.tgt.x,dog.tgt.y+8,DOG_RUN,dt);
+    dogMove(dog.tgt.x,dog.tgt.y+8,dogRun(),dt);
     if(Math.hypot(dog.tgt.x-dog.x,dog.tgt.y+8-dog.y)<5){dog.mode="pick";dog.pause=.3}
   }else if(m==="pick"){
     dog.pause-=dt;
     if(dog.pause<=0)dogGrab();
   }else if(m==="return"){
     const sp=dogSpot();
-    if(dogMove(sp.x,sp.y,DOG_RUN,dt)<=0){
+    if(dogMove(sp.x,sp.y,dogRun(),dt)<=0){
       if(dog.carry){
         dog.carry=false;
         for(let n=0;n<8;n++)P({x:dog.x+dog.face*14,y:dog.y-10,vx:rand(-30,30),vy:-rand(15,50),life:rand(.4,.8),c:pick(["#f4f4f4","#b06a30"]),s:1,g:120,dr:1});
@@ -1046,22 +1073,28 @@ function shoot(mx,my){
   // találat vizsgálata
   if(state==="mini"){miniHit(mx,my);updateHUD();return}
   let hit=-1,bestD=Infinity;
-  ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)&&dist<bestD){bestD=dist;hit=i}});
+  ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)+(skinId==="camo"?4:0)&&dist<bestD){bestD=dist;hit=i}});
   if(hit>=0)killDuck(hit);else miss(mx,my);
-  if(ammo===0)reloadTimer=.35;
+  if(ammo===0)reloadTimer=skinId==="amethyst"?.15:.35;
   updateHUD();
 }
-function killDuck(i){
+function killDuck(i,splash){
   const d=ducks[i];
+  const lucky=skinId==="rainbow"&&Math.random()<.15;
+  const near=(!splash&&skinId==="fire")?ducks.filter(o=>o!==d&&Math.hypot(o.x-d.x,o.y-d.y)<32):[];
   const speedBonus=Math.round(Math.min(900,d.speed*2.2));
   const maneuverBonus={straight:0,sine:150,zigzag:300,dive:450,loop:650}[d.type];
   const heightBonus=Math.round(Math.max(0,(H*.65-d.y))*5);
   const extremeBonus=d.extreme?Math.round(speedBonus*.55):0;
   combo++;
   const comboBonus=Math.min(1000,combo*75);
-  const pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
-  score+=pts;kills++;runDirty=true;Snd.hit();Snd.fall();
-  {const cn=COIN[difficulty.value]||5,sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
+  let pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
+  pts=Math.round(pts*(skinId==="gold"?1.5:1)*(lucky?3:1));
+  score+=pts;kills++;
+  if(skinId==="pink")timeLeft+=1;
+  if(skinId==="stealth"&&!shield&&++kSince>=5){shield=true;kSince=0;setTimeout(()=>{Snd.shield();showToast(T("PAJZS KÉSZ!","SHIELD READY!"),"#73eff7")},500)}
+  if(lucky){setTimeout(()=>showToast(T("SZERENCSE!  ×3 PONT ÉS ×2 COIN","LUCKY!  ×3 SCORE & ×2 COINS"),"#ffe066"),350);setTimeout(Snd.bonus,200)}runDirty=true;Snd.hit();Snd.fall();
+  {const cn=Math.round((COIN[difficulty.value]||5)*(skinId==="emerald"?2:1)*(lucky?2:1)),sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
    pop("+"+cn+" COIN",d.x,d.y+22,"#ffcd75");setTimeout(Snd.coin,160)}
   hitstop=.06;screenFlash=.06;
   const bonus=kills%BONUS_EVERY===0,msg=pick(T(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"],["BANG!","CLEAN SHOT!","NAILED IT!","BRILLIANT!","PERFECT!"]))+"  +"+pts;
@@ -1085,6 +1118,13 @@ function killDuck(i){
   falling.push({x:d.x,y:d.y,vx:d.vx*.15,vy:-30,face:d.face,flash:.16,pts,gy:rand(GY+36,GY+60)});
   ducks.splice(i,1);pending.push(rand(.25,.7));
   updateHUD();
+  if(near.length){
+    Snd.boom();
+    for(let n=0;n<34;n++){const a=(n/34)*6.283,sp=rand(60,130);
+      P({x:d.x,y:d.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(.25,.5),c:pick(["#ff9020","#ffe066","#e43b44","#ffffff"]),s:pick([1,2,3]),g:0,dr:2.2})}
+    screenFlash=.12;
+    near.forEach(o=>{const j=ducks.indexOf(o);if(j>=0)killDuck(j,true)});
+  }
 }
 function miss(mx,my){
   combo=0;runDirty=true;Snd.miss();
@@ -1095,16 +1135,32 @@ function miss(mx,my){
     P({x:mx,y:my,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-(ground?35:0),life:rand(.25,.6),c:pick(cols),s:pick([1,2]),g:ground?260:60,dr:1.5});
   }
   for(let i=0;i<3;i++)P({x:mx,y:my,vx:rand(-8,8),vy:-rand(6,16),life:rand(.4,.7),c:"#c8ccd8",s:2,sm:true});
+  if(shield){shield=false;kSince=0;Snd.shield();showToast(T("A PAJZS MEGVÉDETT!","SHIELD BLOCKED IT!"),"#73eff7");return}
   hp=Math.max(0,hp-1);
   hurtEl.classList.remove("go");void hurtEl.offsetWidth;hurtEl.classList.add("go");
   showToast(hp>0?T("MELLÉ!  -1 SZÍV","MISS!  -1 HEART"):T("ELFOGYTAK A SZÍVEID!","YOU RAN OUT OF HEARTS!"),"#ff6a6a");
   if(hp<=0){Snd.over();overReason="hp";state="over";overTimer=1.1;reloadTimer=0}
 }
-function reload(){ammo=3;pumpT=.3;Snd.pump();updateHUD()}
+function useAbility(){
+  if(state!=="play"||paused||skinId!=="ice")return;
+  if(slowT>0)return;
+  if(abCd>0){showToast(T("TÖLTŐDIK…  ","RECHARGING…  ")+Math.ceil(abCd)+T(" MP"," S"),"#94b0c2");return}
+  slowT=5;abCd=25;Snd.slow();showToast(T("IDŐLASSÍTÁS!","TIME SLOW!"),"#73eff7");
+}
+let skillTxt="";
+function updateSkillHUD(){
+  let lbl="",val="";
+  if(state==="play"&&skinId==="ice"){lbl=(lastPType==="touch"?"":"[E] ")+T("LASSÍT","SLOW");val=slowT>0?Math.ceil(slowT)+T(" MP"," S"):abCd>0?Math.ceil(abCd)+T(" MP"," S"):T("KÉSZ","READY")}
+  else if(state==="play"&&skinId==="stealth"){lbl=T("PAJZS","SHIELD");val=shield?T("KÉSZ","READY"):kSince+"/5"}
+  const k=lbl+"|"+val;if(k===skillTxt)return;skillTxt=k;
+  skillCard.style.display=lbl?"":"none";skillLbl.textContent=lbl;skillVal.textContent=val;
+  skillCard.classList.toggle("ready",val===T("KÉSZ","READY")||slowT>0);
+}
+function reload(){ammo=maxAmmo();pumpT=.3;Snd.pump();updateHUD()}
 
 /* ====== Játékmenet ====== */
 function resetRun(){
-  score=0;combo=0;kills=0;ammo=3;hp=3;prevHp=3;runCoins=0;
+  score=0;combo=0;kills=0;ammo=maxAmmo();hp=3;prevHp=3;runCoins=0;slowT=0;abCd=0;shield=false;kSince=0;
   timeLeft=START_TIME;overReason="hp";lastSec=-1;hitstop=0;screenFlash=0;
   tint[0]=tint[1]=tint[2]=255;sunY=SUNY[0];
   ducks=[];falling=[];parts=[];pending=[];lying=[];spawnTimer=0;reloadTimer=0;overTimer=0;paused=false;
@@ -1347,6 +1403,7 @@ function skinCard(k){
   const pv=mk(54,20),g=pv.getContext("2d");g.translate(54,0);g.rotate(Math.PI/2);g.drawImage(gunImg(k.id),0,0);
   pv.className="pv";b.append(pv);
   const nm=document.createElement("div");nm.className="nm";nm.textContent=skinName(k);b.append(nm);
+  const pk=document.createElement("div");pk.className="pk";pk.textContent=perkText(k.id);b.append(pk);
   const st=document.createElement("div");st.className="st";
   st.textContent=eq?T("FELSZERELVE","EQUIPPED"):owned?T("FELSZEREL","EQUIP"):(k.id==="classic"?T("ALAP","DEFAULT"):SKIN_PRICE+" COIN");
   if(!owned)st.classList.add(s.coins>=SKIN_PRICE?"can":"cant");
@@ -1356,8 +1413,8 @@ function skinCard(k){
     if(eq)return;
     if(!owned){
       if(s.coins<SKIN_PRICE){menuNote=T("MÉG "+fmt(SKIN_PRICE-s.coins)+" COIN KELL A(Z) "+skinName(k)+" SKINHEZ","YOU NEED "+fmt(SKIN_PRICE-s.coins)+" MORE COINS FOR THE "+skinName(k)+" SKIN");Snd.deny();storeRefresh();return}
-      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote=T("MEGVETTED: ","PURCHASED: ")+skinName(k);
-    }else menuNote=T("FELSZERELVE: ","EQUIPPED: ")+skinName(k);
+      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote=T("MEGVETTED: ","PURCHASED: ")+skinName(k)+" – "+perkText(k.id);
+    }else menuNote=T("FELSZERELVE: ","EQUIPPED: ")+skinName(k)+(k.id==="classic"?"":" – "+perkText(k.id));
     s.skin=k.id;skinId=k.id;saveSlots();updateHUD();storeRefresh();
   };
   return b;
@@ -1637,6 +1694,8 @@ function render(){
     ctx.fillRect(0,0,VW,H);
     ctx.globalCompositeOperation="source-over";
   }
+  if(slowT>0){ctx.fillStyle="rgba(110,190,255,"+(.12+.03*Math.sin(frame*.2)).toFixed(3)+")";ctx.fillRect(0,0,VW,H);
+    ctx.fillStyle="rgba(190,235,255,.5)";for(let n=0;n<14;n++)ctx.fillRect((n*53+frame*2)%VW,(n*37+frame)%GY,1,3)}
   drawParts();
   if(tracer)line(tracer.x0,tracer.y0,tracer.x1,tracer.y1,frame&1?"#fff5b0":"#ffffff");
   drawGun();
@@ -1649,7 +1708,13 @@ function render(){
 let last=performance.now();
 function loop(now){
   const dt=Math.max(0,Math.min(.033,(now-last)/1000));last=now;
-  if(!paused){if(hitstop>0)hitstop-=dt;else update(dt)}
+  if(!paused){
+    if(state==="play"){if(slowT>0)slowT=Math.max(0,slowT-dt);if(abCd>0&&slowT<=0)abCd=Math.max(0,abCd-dt)}
+    const sdt=slowT>0?dt*.35:dt;
+    if(hitstop>0)hitstop-=dt;else update(sdt);
+  }
+  document.body.classList.toggle("hasab",skinId==="ice"&&state==="play");
+  updateSkillHUD();
   document.body.classList.toggle("minimode",state==="mini");
   Snd.mode(state==="menu"?"title":paused?"pause":(state==="play"||state==="mini")?"game":"over");Snd.inten(Math.min(4,Math.floor(kills/BONUS_EVERY)));
   if(state==="menu")renderTitle();else render();
@@ -1768,6 +1833,9 @@ const Snd=(()=>{
     bark(n){if(!ok())return;const t=ac.currentTime;
       for(let i=0;i<(n||1);i++){const s=t+i*.2,p=.9+Math.random()*.2;
         noise(s,.11,.55,"bandpass",900*p,500,0);tone(330*p,s,.13,"square",.2,0,150*p);tone(660*p,s,.08,"sawtooth",.08,0,300)}},
+    slow(){if(!ok())return;const t=ac.currentTime;tone(900,t,.6,"sine",.22,0,120);tone(450,t,.6,"triangle",.14,0,60)},
+    shield(){if(!ok())return;const t=ac.currentTime;tone(1175,t,.1,"triangle",.2);tone(1568,t+.08,.25,"triangle",.2)},
+    boom(){if(!ok())return;const t=ac.currentTime;noise(t,.4,.8,"lowpass",1800,80);tone(90,t,.35,"sine",.8,0,30)},
     coin(){if(!ok())return;const t=ac.currentTime;tone(1319,t,.08,"square",.1);tone(1760,t+.07,.2,"square",.1)},
     buy(){if(!ok())return;const t=ac.currentTime;[659,880,1175,1568].forEach((f,i)=>tone(f,t+i*.06,.15,"square",.14))},
     deny(){if(!ok())return;const t=ac.currentTime;tone(200,t,.12,"square",.16);tone(150,t+.12,.2,"square",.16)},
@@ -1834,6 +1902,7 @@ canvas.addEventListener("contextmenu",e=>e.preventDefault());
 addEventListener("keydown",e=>{
   if(e.key.toLowerCase()==="r")doReload();
   if(e.key.toLowerCase()==="q")callDog();
+  if(e.key.toLowerCase()==="e")useAbility();
   if(e.key.toLowerCase()==="m"){Snd.mute();syncMute()}
   if(e.key==="Escape"){
     if(performance.now()-lastLockLoss<250)return;     // ugyanaz az ESC már kilépett az egérzárból
@@ -1843,10 +1912,11 @@ addEventListener("keydown",e=>{
 });
 const portraitMQ=matchMedia("(orientation:portrait)");
 function checkPortrait(){if(portraitMQ.matches)openPause()}
-function doReload(){if(state==="play"&&!paused&&ammo<3){reloadTimer=0;reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
+function doReload(){if(state==="play"&&!paused&&ammo<maxAmmo()){reloadTimer=0;reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
 menuBtn.onclick=()=>{menuBtn.blur();openPause()};
 reloadBtn.addEventListener("pointerdown",e=>{e.preventDefault();doReload()});
 dogBtn.addEventListener("pointerdown",e=>{e.preventDefault();callDog()});
+$("abilityBtn").addEventListener("pointerdown",e=>{e.preventDefault();useAbility()});
 if(document.documentElement.requestFullscreen){
   fsBtn.onclick=()=>{fsBtn.blur();if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})};
 }else fsBtn.parentElement.style.display="none";
