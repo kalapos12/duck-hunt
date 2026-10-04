@@ -58,6 +58,7 @@ body{position:fixed;inset:0}
 
 /* Szerencse-minijáték: csak a COIN és a LŐSZER kártya látszik */
 body.minimode #hud .card{display:none}
+#shellCard.reloading .label{color:#ffe066;animation:blink .4s steps(2) infinite}
 body.minimode #hud #coinCard,body.minimode #hud #shellCard{display:block}
 body.minimode #dogBtn,body.minimode #reloadBtn{display:none!important}
 
@@ -439,6 +440,24 @@ const PERKS={
 };
 const perkText=id=>(PERKS[id]||PERKS.classic)[LANG];
 let slowT=0,abCd=0,shield=false,kSince=0;
+let reloadLeft=0,reloadTotal=0,reloadFrom=0;
+const reloadTime=()=>skinId==="amethyst"?1.8:3;
+function startReload(){
+  if(state!=="play"||reloadLeft>0||ammo>=maxAmmo())return;
+  reloadTotal=reloadLeft=reloadTime();reloadFrom=ammo;
+  Snd.reloadStart();showToast(T("ÚJRATÖLTÉS…","RELOADING…"),"#94b0c2");updateHUD();
+}
+function updateReload(dt){
+  if(reloadLeft<=0)return;
+  reloadLeft-=dt;
+  const mx=maxAmmo(),k=mx-reloadFrom,p=Math.min(1,1-reloadLeft/reloadTotal);
+  while(ammo<mx&&k>0&&p>=.8*(ammo-reloadFrom+1)/k){
+    ammo++;Snd.load();
+    const a=aim();P({x:a.px+rand(-8,8),y:H+2,vx:rand(-6,6),vy:-rand(90,120),life:.3,c:"#e43b44",s:2,g:260});
+    recoil=Math.max(recoil,.25);updateHUD();
+  }
+  if(reloadLeft<=0){reloadLeft=0;ammo=mx;pumpT=.3;Snd.pump();showToast(T("KÉSZ!","READY!"),"#a7f070");updateHUD()}
+}
 const maxAmmo=()=>state==="mini"?3:skinId==="amethyst"?5:3;
 const dogCdT=()=>skinId==="neon"?15:DOG_CD,dogRun=()=>skinId==="neon"?DOG_RUN*1.8:DOG_RUN;
 const skinName=k=>LANG==="en"?SKN_EN[k.id]:k.name;
@@ -780,6 +799,7 @@ function updateHUD(){
     if(i===hp&&hp<prevHp){c.classList.remove("lost");void c.offsetWidth;c.classList.add("lost")}
   });
   prevHp=hp;
+  $("shellCard").classList.toggle("reloading",reloadLeft>0);
   shellEls.forEach((s,i)=>{s.style.display=i<maxAmmo()?"":"none";s.classList.toggle("empty",i>=ammo)});
 }
 function showToast(t,color){
@@ -840,7 +860,8 @@ function muzzle(){
 function drawGun(){
   const{px,py,a}=aim();
   const off=recoil*7+(pumpT>0?Math.sin((1-pumpT/.3)*Math.PI)*10:0);
-  ctx.save();ctx.translate(Math.round(px),Math.round(py));ctx.rotate(a);
+  const rl=reloadLeft>0?1-reloadLeft/reloadTotal:0,drop=reloadLeft>0?Math.sin(Math.min(1,rl)*Math.PI)*15:0,tilt=reloadLeft>0?Math.sin(Math.min(1,rl)*Math.PI)*.6*(px<VW*.5?1:-1)+Math.sin(frame*1.3)*.02:0;
+  ctx.save();ctx.translate(Math.round(px),Math.round(py+drop));ctx.rotate(a+tilt);
   ctx.drawImage(gunImg(skinId),-10,-44+Math.round(off));ctx.restore();
   if(flashT>0){
     const m=muzzle(),big=flashT>.05,x=Math.round(m.x+Math.sin(m.a)*3),y=Math.round(m.y-Math.cos(m.a)*3);
@@ -1056,7 +1077,9 @@ function updateDogHUD(){
 
 /* ====== Lövés ====== */
 function shoot(mx,my){
-  if((state!=="play"&&state!=="mini")||paused||ammo<=0)return;
+  if((state!=="play"&&state!=="mini")||paused)return;
+  if(state==="play"&&reloadLeft>0){showToast(T("ÚJRATÖLTÉS…","RELOADING…"),"#94b0c2");return}
+  if(ammo<=0)return;
   if(state==="mini"&&mini.phase!=="aim")return;
   ammo--;Snd.shot();
   const m=muzzle(),dx=Math.sin(m.a),dy=-Math.cos(m.a);
@@ -1075,7 +1098,7 @@ function shoot(mx,my){
   let hit=-1,bestD=Infinity;
   ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)+(skinId==="camo"?4:0)&&dist<bestD){bestD=dist;hit=i}});
   if(hit>=0)killDuck(hit);else miss(mx,my);
-  if(ammo===0)reloadTimer=skinId==="amethyst"?.15:.35;
+  if(ammo===0)startReload();
   updateHUD();
 }
 function killDuck(i,splash){
@@ -1160,7 +1183,7 @@ function reload(){ammo=maxAmmo();pumpT=.3;Snd.pump();updateHUD()}
 
 /* ====== Játékmenet ====== */
 function resetRun(){
-  score=0;combo=0;kills=0;ammo=maxAmmo();hp=3;prevHp=3;runCoins=0;slowT=0;abCd=0;shield=false;kSince=0;
+  score=0;combo=0;kills=0;ammo=maxAmmo();hp=3;prevHp=3;runCoins=0;slowT=0;abCd=0;shield=false;kSince=0;reloadLeft=0;
   timeLeft=START_TIME;overReason="hp";lastSec=-1;hitstop=0;screenFlash=0;
   tint[0]=tint[1]=tint[2]=255;sunY=SUNY[0];
   ducks=[];falling=[];parts=[];pending=[];lying=[];spawnTimer=0;reloadTimer=0;overTimer=0;paused=false;
@@ -1607,7 +1630,7 @@ function update(dt){
   if(state==="mini"){updateMini(dt);return}
   if(state==="menu")return;
 
-  if(reloadTimer>0){reloadTimer-=dt;if(reloadTimer<=0){reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
+  if(state==="play")updateReload(dt);
   if(state==="play"){
     timeLeft-=dt;
     const sec=Math.ceil(timeLeft);
@@ -1699,6 +1722,15 @@ function render(){
   drawParts();
   if(tracer)line(tracer.x0,tracer.y0,tracer.x1,tracer.y1,frame&1?"#fff5b0":"#ffffff");
   drawGun();
+  if(reloadLeft>0&&state==="play"){
+    const m=muzzle(),p=Math.max(0,Math.min(1,1-reloadLeft/reloadTotal)),bx=Math.round(Math.max(22,Math.min(VW-22,m.x)))-20,by=Math.max(16,Math.round(m.y)-16);
+    ctx.fillStyle="#000";ctx.fillRect(bx-1,by-1,42,8);
+    ctx.fillStyle="#29366f";ctx.fillRect(bx,by,40,6);
+    ctx.fillStyle=p>=1?"#a7f070":"#ffcd75";ctx.fillRect(bx,by,Math.round(40*p),6);
+    ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillRect(bx,by,Math.round(40*p),1);
+    for(let n=1;n<maxAmmo();n++){ctx.fillStyle="#000";ctx.fillRect(bx+Math.round(40*.8*n/maxAmmo()),by,1,6)}
+    drawNum(String(Math.ceil(reloadLeft)),bx+20,by-9,"#ffe066",1);
+  }
   if(mouse.over&&!touchMode&&state!=="menu")drawCross(mouse.x,mouse.y);
   ctx.restore();
   if(screenFlash>0){ctx.fillStyle="rgba(255,244,190,"+(screenFlash>.03?.22:.1)+")";ctx.fillRect(0,0,VW,H)}
@@ -1833,6 +1865,8 @@ const Snd=(()=>{
     bark(n){if(!ok())return;const t=ac.currentTime;
       for(let i=0;i<(n||1);i++){const s=t+i*.2,p=.9+Math.random()*.2;
         noise(s,.11,.55,"bandpass",900*p,500,0);tone(330*p,s,.13,"square",.2,0,150*p);tone(660*p,s,.08,"sawtooth",.08,0,300)}},
+    reloadStart(){if(!ok())return;const t=ac.currentTime;noise(t,.08,.4,"bandpass",700,0);tone(140,t,.1,"square",.12,0,90)},
+    load(){if(!ok())return;const t=ac.currentTime;noise(t,.05,.35,"bandpass",2200,0);tone(1400,t,.05,"square",.1,0,900);tone(420,t+.04,.07,"triangle",.14)},
     slow(){if(!ok())return;const t=ac.currentTime;tone(900,t,.6,"sine",.22,0,120);tone(450,t,.6,"triangle",.14,0,60)},
     shield(){if(!ok())return;const t=ac.currentTime;tone(1175,t,.1,"triangle",.2);tone(1568,t+.08,.25,"triangle",.2)},
     boom(){if(!ok())return;const t=ac.currentTime;noise(t,.4,.8,"lowpass",1800,80);tone(90,t,.35,"sine",.8,0,30)},
@@ -1912,7 +1946,7 @@ addEventListener("keydown",e=>{
 });
 const portraitMQ=matchMedia("(orientation:portrait)");
 function checkPortrait(){if(portraitMQ.matches)openPause()}
-function doReload(){if(state==="play"&&!paused&&ammo<maxAmmo()){reloadTimer=0;reload();showToast(T("ÚJRATÖLTÉS","RELOADING"))}}
+function doReload(){if(!paused)startReload()}
 menuBtn.onclick=()=>{menuBtn.blur();openPause()};
 reloadBtn.addEventListener("pointerdown",e=>{e.preventDefault();doReload()});
 dogBtn.addEventListener("pointerdown",e=>{e.preventDefault();callDog()});
