@@ -575,7 +575,7 @@ function drawShadow(x,y){
 }
 
 /* ====== Háttér (egyszer legenerálva, fix seed → nem villog) ====== */
-let bgSky,bgLand,bgFront,grass=[],stars=[];
+let bgSky,bgLand,bgBase,bgFront,grass=[],stars=[],LK={cx:0,rx:0,cy:0,ry:0},CAB={x:0,y:0,win:[],ch:{x:0,y:0}},BFLY=[];
 function buildBackground(){
   const rnd=mulberry(1990),r=(a,b)=>a+rnd()*(b-a),ri=(a,b)=>Math.floor(r(a,b+1));
   let g;
@@ -630,6 +630,7 @@ function buildBackground(){
     }
   }
   for(let x=-4;x<VW+8;x+=ri(9,13))pine(x,GY+2,ri(9,11),ri(3,4));
+  bgBase=mk(VW,H);bgBase.getContext("2d").drawImage(bgLand,0,0);      // a farm-jelenet ezt használja
   // talaj sávok (perspektíva)
   let y=GY,hh=3,k=0;
   while(y<H){g.fillStyle=k%2?"#43a02a":"#58b833";g.fillRect(0,y,VW,Math.min(hh,H-y));y+=hh;hh+=1;k++}
@@ -642,6 +643,91 @@ function buildBackground(){
     g.fillStyle=["#f4f4f4","#ffcd75","#ef7d57","#b13e53"][ri(0,3)];
     g.fillRect(ri(0,VW),ri(GY+6,H-3),1,1);
   }
+  // ===== TÓ a völgyben, a távoli fenyők előtt =====
+  {
+    const cx=Math.round(VW*.5),rx=Math.round(Math.max(60,VW*.2)),cy=GY+3,ry=9;
+    LK={cx,rx,cy,ry};
+    const WC=["#a6e4fc","#8fd8fb","#74c4f4","#5aaae8","#4690d8","#3a78c4","#3066b0"];
+    for(let dy=-ry;dy<=ry;dy++){
+      const half=Math.round(rx*Math.sqrt(1-(dy*dy)/((ry+.5)*(ry+.5))));
+      const ci=Math.min(WC.length-1,Math.floor((dy+ry)/(2*ry+1)*WC.length));
+      g.fillStyle="#1a4a3a";g.fillRect(cx-half-1,cy+dy,half*2+2,1);               // sötét part-vonal
+      g.fillStyle=WC[ci];g.fillRect(cx-half+1,cy+dy,half*2-2,1);
+      for(let x=cx-half+2;x<cx+half-2;x++){ if(((x+dy*3)&3)===0){g.fillStyle=WC[Math.max(0,ci-1)];g.fillRect(x,cy+dy,1,1)} }
+    }
+    // a hegyek és fenyők tükörképe (halvány)
+    g.save();g.globalAlpha=.28;g.beginPath();g.ellipse(cx,cy,rx-2,ry-1,0,0,Math.PI*2);g.clip();
+    g.translate(0,GY*2-2);g.scale(1,-1);g.drawImage(bgBase,0,GY-ry-2,VW,ry*2+4,0,GY-ry-2,VW,ry*2+4);g.restore();
+    // part: homokos szél + nád
+    for(let i=0;i<60;i++){const a=rnd()*Math.PI;const x=Math.round(cx+Math.cos(a)*(rx+1)*(rnd()<.5?1:-1)),y=Math.round(cy+Math.sin(a)*ry*.9);
+      g.fillStyle=pick(["#d8c080","#b8a060","#6aa832"]);g.fillRect(x,y,2,1)}
+    for(let i=0;i<16;i++){
+      const side=i%2?1:-1,x=Math.round(cx+side*(rx*(.55+rnd()*.5))),y=cy+ry-ri(0,3),h=ri(6,12);
+      g.fillStyle="#2f8a24";g.fillRect(x,y-h,1,h);g.fillStyle="#58b833";g.fillRect(x+1,y-h+3,1,h-3);
+      if(i%3===0){g.fillStyle="#6a3a1a";g.fillRect(x-1,y-h-2,3,4);g.fillStyle="#9a6a3a";g.fillRect(x-1,y-h-2,1,4)}
+    }
+    // csónak a tavon
+    const bx=cx+Math.round(rx*.32),by=cy+1;
+    g.fillStyle="#1a1c2c";g.fillRect(bx-7,by,15,3);g.fillRect(bx-8,by-1,2,1);g.fillRect(bx+7,by-1,2,1);
+    g.fillStyle="#b13e53";g.fillRect(bx-6,by,13,1);g.fillStyle="#f4f4f4";g.fillRect(bx-6,by+1,13,1);g.fillStyle="#8a5a2c";g.fillRect(bx-4,by-2,3,2);
+    g.fillStyle="#1a1c2c";g.fillRect(bx+1,by-5,1,5);g.fillStyle="#f4f4f4";g.fillRect(bx+2,by-5,4,3);g.fillStyle="#e43b44";g.fillRect(bx+2,by-5,4,1);
+    // vízililiomok
+    for(let i=0;i<6;i++){const x=cx+ri(-rx+10,-8),y=cy+ri(-1,ry-2);g.fillStyle="#2f9a3f";g.fillRect(x,y,3,1);g.fillStyle="#58b833";g.fillRect(x,y,1,1);if(i%2===0){g.fillStyle="#ffb0c8";g.fillRect(x+1,y-1,1,1)}}
+    LK.sp=[];for(let i=0;i<46;i++){const dy=ri(-ry+1,ry-1),half=Math.round(rx*Math.sqrt(1-(dy*dy)/((ry+.5)*(ry+.5))))-4;LK.sp.push({x:cx+ri(-half,half),y:cy+dy,b:ri(0,9)})}
+  }
+  // ===== faház a jobb parton (füstölgő kémény, esténként kivilágított ablak) =====
+  {
+    const x=Math.round(VW*.5+Math.max(60,VW*.2)+22),by=GY+8,w=24,h=13;
+    g.fillStyle="#1a1c2c";g.fillRect(x-w/2-1,by-h-1,w+2,h+2);
+    g.fillStyle="#a8703c";g.fillRect(x-w/2,by-h,w,h);
+    for(let yy=by-h;yy<by;yy+=3){g.fillStyle="#7a4e26";g.fillRect(x-w/2,yy+2,w,1);g.fillStyle="#c08850";g.fillRect(x-w/2,yy,w,1)}
+    for(let i=0;i<=9;i++){g.fillStyle="#1a1c2c";g.fillRect(x-w/2-2+i,by-h-i-1,w+4-2*i,1);g.fillStyle=i<2?"#d8665a":"#b13e53";g.fillRect(x-w/2-1+i,by-h-i,w+2-2*i,1)}
+    g.fillStyle="#1a1c2c";g.fillRect(x+4,by-h-12,4,9);g.fillStyle="#8a8e9c";g.fillRect(x+5,by-h-12,2,8);g.fillStyle="#c8ccd8";g.fillRect(x+5,by-h-12,1,8);
+    g.fillStyle="#1a1c2c";g.fillRect(x-9,by-8,6,6);g.fillStyle="#3a2a18";g.fillRect(x-8,by-7,4,4);
+    g.fillStyle="#1a1c2c";g.fillRect(x+1,by-9,8,9);g.fillStyle="#4a2c1a";g.fillRect(x+2,by-8,6,8);g.fillStyle="#e8c050";g.fillRect(x+7,by-4,1,1);
+    CAB={x,y:by,win:[{x:x-8,y:by-7,w:4,h:4}],ch:{x:x+6,y:by-h-12}};
+  }
+  // ===== lombos fák: tölgyek, őszi juharok, nyírek (a kerítés mögött) =====
+  function leafBall(cx,cy,r,pal){
+    for(let yy=-r;yy<=r;yy++)for(let xx=-r;xx<=r;xx++){
+      const d=Math.hypot(xx,yy);if(d>r)continue;
+      const l=(-xx*.55-yy*.85)/r+(rnd()-.5)*.55;
+      g.fillStyle=pal[l>.6?3:l>.12?2:l>-.45?1:0];g.fillRect(Math.round(cx+xx),Math.round(cy+yy),1,1);
+    }
+  }
+  function tree(cx,base,r,pal,trunk){
+    g.fillStyle="rgba(10,50,20,.28)";for(let i=-r;i<=r;i++){const hh=Math.round(2*Math.sqrt(Math.max(0,1-(i*i)/(r*r))));g.fillRect(cx+i+3,base-hh+2,1,hh*2)}
+    const tw=Math.max(3,Math.round(r*.28)),th=Math.round(r*1.1);
+    g.fillStyle="#1a1c2c";g.fillRect(cx-(tw>>1)-1,base-th,tw+2,th+2);
+    g.fillStyle="#6a4222";g.fillRect(cx-(tw>>1),base-th,tw,th+1);g.fillStyle="#9a6a3a";g.fillRect(cx-(tw>>1),base-th,1,th+1);g.fillStyle="#3e2410";g.fillRect(cx+(tw>>1)-1,base-th,1,th+1);
+    const top=base-th-Math.round(r*.55);
+    const balls=[[0,0,1],[-.78,.3,.72],[.78,.3,.72],[-.35,-.62,.7],[.4,-.55,.62],[0,.45,.6]];
+    g.fillStyle="#12281a";for(const[ox,oy,k]of balls){const rr=Math.round(r*k)+1,bx=Math.round(cx+ox*r),by=Math.round(top+oy*r);for(let yy=-rr;yy<=rr;yy++){const hw=Math.floor(Math.sqrt(rr*rr-yy*yy));g.fillRect(bx-hw,by+yy,hw*2+1,1)}}
+    for(const[ox,oy,k]of balls)leafBall(Math.round(cx+ox*r),Math.round(top+oy*r),Math.round(r*k),pal);
+    for(let i=0;i<r*1.5;i++){g.fillStyle=pal[3];g.fillRect(Math.round(cx+(rnd()-.7)*r*1.2),Math.round(top+(rnd()-.9)*r),1,1)}
+  }
+  const GRN=["#1c5a2c","#2f8a3a","#4cb050","#9ae070"],ORG=["#9a3a1c","#d0601e","#f09a30","#ffd868"],RED=["#6e1a2c","#a83048","#d8586c","#ff9aa8"],LIM=["#2a6a30","#58a838","#98d048","#d8f080"];
+  tree(Math.round(VW*.075),GY+13,15,GRN);
+  tree(Math.round(VW*.165),GY+12,10,ORG);
+  tree(Math.round(VW*.91),GY+13,16,ORG);
+  tree(Math.round(VW*.815),GY+12,11,RED);
+  tree(Math.round(VW*.30),GY+11,8,LIM);
+  function birch(cx,base,h){
+    g.fillStyle="#1a1c2c";g.fillRect(cx-2,base-h,4,h+1);g.fillStyle="#eceae0";g.fillRect(cx-1,base-h,2,h);
+    for(let yy=base-h+3;yy<base;yy+=4){g.fillStyle="#2a2a30";g.fillRect(cx-1,yy,1,1)}
+    for(const[ox,oy,rr]of[[0,-h,6],[-4,-h+5,4],[4,-h+4,4]])leafBall(cx+ox,base+oy,rr,LIM);
+  }
+  birch(Math.round(VW*.355),GY+12,18);birch(Math.round(VW*.375),GY+12,14);
+  // ===== virágoskert a fűben =====
+  for(let c=0;c<26;c++){
+    const fx=ri(4,VW-4),fy=ri(GY+34,H-12),col=pick(["#e43b44","#ffcd75","#f4f4f4","#b86ad8","#ff8ab0","#73c8f7"]);
+    for(let i=0;i<ri(3,6);i++){
+      const x=fx+ri(-6,6),y=fy+ri(-3,3);
+      g.fillStyle="#2f8a24";g.fillRect(x,y+1,1,3);
+      g.fillStyle=col;g.fillRect(x-1,y,3,1);g.fillRect(x,y-1,1,3);g.fillStyle="#ffe066";g.fillRect(x,y,1,1);
+    }
+  }
+  BFLY=[];for(let i=0;i<4;i++)BFLY.push({x:ri(30,VW-30),y:ri(GY+36,H-40),ph:rnd()*6.28,c:pick(["#ffcd75","#ff8ab0","#73c8f7","#f4f4f4"]),sp:.4+rnd()*.5});
   // fakerítés
   const fy=GY+14;
   g.fillStyle="#1a1c2c";g.fillRect(0,fy+3,VW,4);g.fillRect(0,fy+9,VW,4);
@@ -665,9 +751,50 @@ function buildBackground(){
     }
     g.fillStyle="#145a2a";g.fillRect(cx-3,cy-rr,6,1);
   }
-  for(let x=-6;x<VW+10;x+=ri(14,22))blob(x,GY+8,ri(7,11));
+  for(let x=-6;x<VW+10;x+=ri(14,22)){const rr=ri(7,11);if(x>LK.cx-LK.rx-8&&x<CAB.x+14)continue;blob(x,GY+8,rr)}   // a tó és a faház előtt nincs bokor
   grass=[];                                   // a fű lengése renderelés közben animált
   for(let x=0;x<VW;x+=3)grass.push({x,h:ri(4,12),c:(x/3)%2?"#2b8a2f":"#1e6a2a"});
+}
+/* ====== Élő táj: tó csillogás, kémény füstje, pillangók, esti fények, szentjánosbogarak ====== */
+const lum=()=>(tint[0]+tint[1]+tint[2])/3;
+function drawLandFx(){
+  if(!LK.sp)return;
+  for(let i=0;i<7;i++){                                                   // hullámzó fénycsíkok
+    const dy=((i*5+3)%(LK.ry*2-1))-LK.ry+1,half=Math.round(LK.rx*Math.sqrt(1-(dy*dy)/((LK.ry+.5)*(LK.ry+.5))))-6;
+    const x=LK.cx-half+Math.round(((time*(4+i%3)+i*37)%(half*2)));
+    ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillRect(x,LK.cy+dy,4+i%3,1);
+  }
+  for(const p of LK.sp){if(((frame>>3)+p.b)%7<2){ctx.fillStyle="#ffffff";ctx.fillRect(p.x,p.y,1,1);if(p.b%3===0)ctx.fillRect(p.x+1,p.y,1,1)}}
+  for(let i=0;i<6;i++){                                                   // a kémény füstje
+    const t=((time*.5+i/6)%1),x=CAB.ch.x+2+Math.round(t*14+Math.sin(time+i)*2),y=CAB.ch.y-Math.round(t*20),sz=1+Math.round(t*3);
+    ctx.fillStyle="rgba(235,238,245,"+(.7*(1-t)).toFixed(2)+")";ctx.fillRect(x,y,sz,sz);
+  }
+  const day=Math.max(0,Math.min(1,(lum()-170)/60));
+  if(day>.2)for(const b of BFLY){                                         // pillangók (nappal)
+    const x=Math.round(b.x+Math.sin(time*b.sp+b.ph)*34+Math.sin(time*1.7+b.ph)*5),y=Math.round(b.y+Math.cos(time*b.sp*1.3+b.ph)*14);
+    const w=Math.floor(time*9+b.ph*3)%2;
+    ctx.fillStyle="#1a1c2c";ctx.fillRect(x,y,1,2);
+    ctx.fillStyle=b.c;if(w){ctx.fillRect(x-2,y-1,2,2);ctx.fillRect(x+1,y-1,2,2)}else{ctx.fillRect(x-1,y,1,2);ctx.fillRect(x+1,y,1,2)}
+  }
+}
+function drawNightFx(){
+  const glow=Math.max(0,Math.min(1,(235-lum())/70));
+  if(glow<=0)return;
+  for(const w of CAB.win){                                                // világító ablak
+    ctx.fillStyle="rgba(255,200,90,"+(.28*glow)+")";ctx.fillRect(w.x-2,w.y-2,w.w+4,w.h+4);
+    ctx.fillStyle="rgba(255,230,140,"+glow+")";ctx.fillRect(w.x,w.y,w.w,w.h);
+    ctx.fillStyle="rgba(120,70,20,"+glow+")";ctx.fillRect(w.x+w.w/2,w.y,1,w.h);ctx.fillRect(w.x,w.y+w.h/2,w.w,1);
+  }
+  const ff=Math.max(0,Math.min(1,(205-lum())/60));
+  if(ff>0){
+    for(let i=0;i<34;i++){                                                // szentjánosbogarak
+      const a=.5+.5*Math.sin(time*(1.2+i%5*.3)+i*1.7);if(a<.45)continue;
+      const x=Math.round((i*97+Math.sin(time*.5+i)*14+time*(3+i%4))%VW),y=GY+14+Math.round((i*53)%(H-GY-30)+Math.cos(time*.7+i*2)*6);
+      ctx.fillStyle="rgba(255,244,150,"+(.25*ff*a)+")";ctx.fillRect(x-1,y-1,3,3);
+      ctx.fillStyle="rgba(255,255,200,"+(ff*a)+")";ctx.fillRect(x,y,1,1);
+    }
+    for(const p of LK.sp){if(((frame>>3)+p.b)%5===0){ctx.fillStyle="rgba(255,255,255,"+ff+")";ctx.fillRect(p.x,p.y,1,1)}}   // a csillagok tükröződése
+  }
 }
 /* ====== Címképernyő háttérkép: naplementés tó, hegyek, fenyők, vadkacsa-csapat ====== */
 const PAL_S={};Object.keys(PAL).forEach(k=>PAL_S[k]="#150c2e");
@@ -849,7 +976,7 @@ function buildFarm(){
   const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))};
   farmSlots=[];
   const slot=(x,y,sc,tag)=>farmSlots.push({x:Math.round(x),y:Math.round(y),sc,cd:0,tag});
-  g.drawImage(bgLand,0,0,VW,GY,0,0,VW,GY);               // hegyek + dombok + fenyők
+  g.drawImage(bgBase,0,0,VW,GY,0,0,VW,GY);               // hegyek + dombok + fenyők
   // talaj: perspektívikus sávok + földes udvar
   {let y=GY,hh=3,k=0;while(y<H){R(0,y,VW,Math.min(hh,H-y),k%2?"#6aa832":"#7cc23c");y+=hh;hh+=1;k++}}
   for(let y=GY+12;y<H-6;y++){
@@ -2057,6 +2184,7 @@ function render(){
   }
   drawBirds();
   ctx.drawImage(bgLand,0,0);
+  drawLandFx();
   for(const d of ducks)drawShadow(d.x,d.y);
   for(const l of lying){
     if(l.life<2.5&&((frame>>2)&1))continue;                        // eltűnés előtt villog
@@ -2084,6 +2212,7 @@ function render(){
     ctx.fillRect(0,0,VW,H);
     ctx.globalCompositeOperation="source-over";
   }
+  if(state!=="practice")drawNightFx();
   if(slowT>0){ctx.fillStyle="rgba(110,190,255,"+(.12+.03*Math.sin(frame*.2)).toFixed(3)+")";ctx.fillRect(0,0,VW,H);
     ctx.fillStyle="rgba(190,235,255,.5)";for(let n=0;n<14;n++)ctx.fillRect((n*53+frame*2)%VW,(n*37+frame)%GY,1,3)}
   drawParts();
