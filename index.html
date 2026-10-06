@@ -450,7 +450,7 @@ const perkText=id=>(PERKS[id]||PERKS.classic)[LANG];
 let slowT=0,abCd=0,shield=false,kSince=0;
 let waveT=10;
 let reloadLeft=0,reloadTotal=0,reloadFrom=0,loadKick=0,shellFly=[],gunPort={x:0,y:0};
-const reloadTime=()=>state!=="practice"&&skinId==="amethyst"?1.8:3;
+const reloadTime=()=>state!=="practice"&&skinId==="amethyst"?1.2:2;
 function startReload(){
   if((state!=="play"&&state!=="practice")||reloadLeft>0||ammo>=maxAmmo())return;
   reloadTotal=reloadLeft=reloadTime();reloadFrom=ammo;
