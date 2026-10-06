@@ -252,7 +252,7 @@ body.touch #titleArt{filter:none}
   <div class="card ready" id="dogCard"><div class="label" data-en='DOG<span class="kb"> [Q]</span>'>KUTYA<span class="kb"> [Q]</span></div><div class="value" id="dogVal">KÉSZ</div></div>
 </div>
 
-<div id="controls"><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn" data-en="MENU">MENÜ</button></div>
+<div id="controls"><button class="btn" id="fsTop" data-en="FULL">TELJES</button><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn" data-en="MENU">MENÜ</button></div>
 
 <div id="toast"></div>
 <div id="hurt"></div>
@@ -2220,9 +2220,20 @@ menuBtn.onclick=()=>{menuBtn.blur();openPause()};
 reloadBtn.addEventListener("pointerdown",e=>{e.preventDefault();doReload()});
 dogBtn.addEventListener("pointerdown",e=>{e.preventDefault();callDog()});
 $("abilityBtn").addEventListener("pointerdown",e=>{e.preventDefault();useAbility()});
-if(document.documentElement.requestFullscreen){
-  fsBtn.onclick=()=>{fsBtn.blur();if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})};
-}else fsBtn.parentElement.style.display="none";
+const FSE=document.documentElement,fsReq=FSE.requestFullscreen||FSE.webkitRequestFullscreen,fsOn=()=>document.fullscreenElement||document.webkitFullscreenElement;
+function toggleFS(){
+  if(!fsReq){showToast(T("iPhone: Megosztás → Főképernyőhöz adás","iPhone: Share → Add to Home Screen"),"#94b0c2");return}
+  try{
+    if(fsOn()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+    else{const p=fsReq.call(FSE);if(p&&p.catch)p.catch(()=>{});
+      try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(()=>{})}catch(e){}}
+  }catch(e){}
+}
+fsBtn.onclick=()=>{fsBtn.blur();toggleFS()};
+$("fsTop").onclick=e=>{e.currentTarget.blur();toggleFS()};
+addEventListener("keydown",e=>{if(e.key.toLowerCase()==="f"&&!e.ctrlKey&&!e.metaKey)toggleFS()});
+function syncFS(){const on=!!fsOn();$("fsTop").textContent=on?T("KILÉP","EXIT"):T("TELJES","FULL");fsBtn.textContent=on?T("KILÉPÉS A TELJES KÉPERNYŐBŐL","EXIT FULLSCREEN"):T("TELJES KÉPERNYŐ","FULLSCREEN");setTimeout(resize,150)}
+document.addEventListener("fullscreenchange",syncFS);document.addEventListener("webkitfullscreenchange",syncFS);
 if(portraitMQ.addEventListener)portraitMQ.addEventListener("change",checkPortrait);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)openPause()});
 addEventListener("resize",()=>{resize();checkPortrait()});
