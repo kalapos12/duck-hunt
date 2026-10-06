@@ -982,7 +982,7 @@ let spawnTimer=0,reloadTimer=0,overTimer=0,time=0,frame=0;
 let recoil=0,pumpT=0,flashT=0,shake=0,tracer=null;
 const difficulty={value:"normal"};   // easy | normal | extreme
 let sens=1,runDirty=false,lastLockLoss=0,runCoins=0;
-const COIN={easy:2,normal:5,extreme:7};
+const COIN={easy:2,normal:5,extreme:10};
 const mouse={x:160,y:100,over:false};
 
 /* Időzítő + napszak-váltás */
@@ -1604,7 +1604,7 @@ const helpText=()=>T(
  "<p><b>SZÍVEK:</b> 3 szíved van, minden mellélövés elvesz egyet.</p>"+
  "<p><b>IDŐ:</b> 1 perccel indulsz, minden 10. lelőtt kacsa +15 másodpercet ad. Közben telik a nap: nappal, naplemente, éjszaka.</p>"+
  "<p><b>KUTYA:</b> a lelőtt kacsák a fűben maradnak. Ha megnyomod a Q-t, a kutya összeszedi őket, és a pontjuk megduplázódik. 30 másodpercenként használhatod.</p>"+
- "<p><b>COIN:</b> minden lelőtt kacsáért coin jár (könnyű 2, normál 5, extrém 7). A SKIN BOLTBAN skinekre költheted (2000/db), vagy a SZERENCSE JÁTÉKBAN kockáztathatsz 100 coint (20 percenként).</p>"+
+ "<p><b>COIN:</b> minden lelőtt kacsáért coin jár (könnyű 2, normál 5, extrém 10). A SKIN BOLTBAN skinekre költheted (2000/db), vagy a SZERENCSE JÁTÉKBAN kockáztathatsz 100 coint (20 percenként).</p>"+
  "<p><b>GYAKORLÁS:</b> a menüben a GYAKORLÁS gombbal egy farmra jutsz: 1 percig tyúk-céltáblákat lőhetsz, pont és coin nélkül.</p>"+
  "<p><b>MENTÉS:</b> a szünet menüben a MENTÉS gombbal a félbehagyott játékot a slotodba teheted, és később onnan folytathatod.</p>",
  "<p><b>GOAL:</b> shoot the flying ducks before time runs out or you lose all your hearts.</p>"+
@@ -1614,7 +1614,7 @@ const helpText=()=>T(
  "<p><b>HEARTS:</b> you have 3 hearts, every missed shot costs one.</p>"+
  "<p><b>TIME:</b> you start with 1 minute, every 10th duck adds +15 seconds. The day passes as you play: daytime, sunset, night.</p>"+
  "<p><b>DOG:</b> downed ducks stay in the grass. Press Q and the dog fetches them, doubling their points. Usable every 30 seconds.</p>"+
- "<p><b>COINS:</b> every duck gives coins (easy 2, normal 5, extreme 7). Spend them on skins in the SKIN SHOP (2000 each), or risk 100 coins in the LUCKY GAME (once every 20 minutes).</p>"+
+ "<p><b>COINS:</b> every duck gives coins (easy 2, normal 5, extreme 10). Spend them on skins in the SKIN SHOP (2000 each), or risk 100 coins in the LUCKY GAME (once every 20 minutes).</p>"+
  "<p><b>PRACTICE:</b> PRACTICE in the menu takes you to a farm: shoot hen targets for 1 minute with no score and no coins.</p>"+
  "<p><b>SAVING:</b> use SAVE in the pause menu to put an unfinished game into your slot and continue it later.</p>");
 function mkBtn(label,fn){
@@ -1781,7 +1781,7 @@ function showMenu(kind,nb){
     menuBack=()=>showMenu("slotmenu");
   }else if(kind==="store"&&s){
     ovTitle.textContent=T("SKIN BOLT","SKIN SHOP");
-    ovText.innerHTML=T("EGYENLEG: <b>"+fmt(s.coins)+" COIN</b> • minden skin <b>"+SKIN_PRICE+" COIN</b><br>Coin: kacsánként KÖNNYŰ 2, NORMÁL 5, EXTRÉM 7.","BALANCE: <b>"+fmt(s.coins)+" COIN</b> • every skin costs <b>"+SKIN_PRICE+" COIN</b><br>Coins per duck: EASY 2, NORMAL 5, EXTREME 7.");
+    ovText.innerHTML=T("EGYENLEG: <b>"+fmt(s.coins)+" COIN</b> • minden skin <b>"+SKIN_PRICE+" COIN</b><br>Coin: kacsánként KÖNNYŰ 2, NORMÁL 5, EXTRÉM 10.","BALANCE: <b>"+fmt(s.coins)+" COIN</b> • every skin costs <b>"+SKIN_PRICE+" COIN</b><br>Coins per duck: EASY 2, NORMAL 5, EXTREME 10.");
     const wrap=document.createElement("div");wrap.className="skins";
     SKINS.forEach(k=>wrap.append(skinCard(k)));
     screenBody.append(wrap);
