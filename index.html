@@ -281,28 +281,6 @@ body.touch #titleArt{filter:none}
 #iosHelp p.sm{color:#7b8fa0;font-size:8px}
 #iosHelp b{color:var(--gold);font-weight:400}
 #iosHelp .btn{width:140px;margin-top:6px}
-
-/* ====== Online ranglista ====== */
-.lbrows{margin-top:12px;max-height:44vh;overflow:auto;text-align:left}
-.lbhead,.lbrow{display:grid;grid-template-columns:36px 1fr 96px 56px;gap:8px;align-items:center;padding:8px 10px;font-size:9px}
-.lbhead{color:#7b8fa0;font-size:7px;padding-bottom:2px}
-.lbrow{background:#222a52;border:2px solid #000;margin-top:5px;color:#e8eefc}
-.lbrow .rk{color:#94a8bc}
-.lbrow:nth-child(2) .rk{color:#ffcd75}.lbrow:nth-child(3) .rk{color:#d0d8e8}.lbrow:nth-child(4) .rk{color:#e0905a}
-.lbrow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lbrow .sc{text-align:right;color:var(--gold)}
-.lbrow .dk,.lbhead span:last-child,.lbhead span:nth-child(3){text-align:right}
-.lbrow .dk{color:#94a8bc}
-.lbrow.me{background:#3a4a9a;outline:2px solid var(--gold);outline-offset:-2px}
-.lbmsg{margin-top:18px;font-size:9px;line-height:1.9;color:#94a8bc}
-#screenBody .seg{margin-top:14px}
-.nickin{display:block;margin:16px auto 0;width:min(320px,100%);box-sizing:border-box;padding:13px 12px;font-family:var(--px);font-size:14px;letter-spacing:2px;text-align:center;
- background:#0f1226;color:#fff;border:3px solid #566c86;outline:none}
-.nickin:focus{border-color:var(--gold)}
-@media (max-height:520px),(max-width:900px){
- .lbrows{max-height:36vh}.lbhead,.lbrow{font-size:7px;padding:5px 7px;grid-template-columns:26px 1fr 70px 40px;gap:5px}.lbhead{font-size:6px}
- .nickin{font-size:11px;padding:9px}
-}
 </style>
 </head>
 <body>
@@ -1622,7 +1600,7 @@ function resetRun(){
   updateHUD();
 }
 function startGame(run){
-  hideMenu();LB.done=false;
+  hideMenu();
   resetRun();
   if(run){                                                   // mentett játék betöltése
     difficulty.value=run.diff;
@@ -1643,6 +1621,10 @@ function toTitle(){
   resetRun();state="menu";cur=-1;
   sens=1;
   showMenu("title");
+}
+function toSlotMenu(){                                        // játék vége után: vissza a slotba, nem a címképernyőre
+  if(!S()){toTitle();return}
+  resetRun();state="menu";showMenu("slotmenu");
 }
 function openPause(){
   if((state!=="play"&&state!=="mini"&&state!=="practice")||paused)return;
@@ -1792,40 +1774,6 @@ function saveRun(){
 }
 const fmt=n=>(+n||0).toLocaleString(T("hu-HU","en-US"));
 
-/* ====== Online ranglista (claude.ai db, csak az online verzióban) ====== */
-const LB_MIN_KILLS=20;
-const LB={db:null,uid:null,can:null,tab:"normal",rows:null,rowsFor:"",err:"",done:false,note:""};
-const lbLevel=k=>Math.floor(k/10)+1;
-const lbOK=()=>!!(LB.db&&LB.uid&&LB.can!==false);
-let lbFrom="title";
-async function lbInit(){
-  try{
-    if(!window.claude||!window.claude.use)return;
-    const[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
-    if(!db||!user)return;
-    LB.uid=await user.id();LB.can=await user.can("data.write");LB.db=db;
-    if(menuKind==="title"&&state==="menu")showMenu("title");
-  }catch(e){}
-}
-const lbCol=d=>LB.db.collection("lb_"+d);
-const cleanNick=n=>(n||"").replace(/[^\p{L}\p{N} _.\-]/gu,"").replace(/\s+/g," ").trim().slice(0,12);
-async function lbLoad(d){
-  LB.rows=null;LB.err="";
-  try{const snap=await lbCol(d).orderBy("score","desc").limit(20).get();LB.rows=snap.docs.map(x=>Object.assign({id:x.id},x.data()))}
-  catch(e){LB.err=(e&&e.code)||"error";LB.rows=[]}
-  LB.rowsFor=d;
-}
-async function lbSubmit(nick){
-  const d=difficulty.value,ref=lbCol(d).doc(LB.uid),sc=Math.max(0,Math.min(9999999,Math.floor(score))),k=Math.max(0,Math.floor(kills));
-  const cur=await ref.get(),old=cur.exists?cur.data():null;
-  let improved=true;
-  if(old&&+old.score>=sc){improved=false;if(old.nick!==nick)await ref.update({nick})}
-  else await ref.set({nick,score:sc,kills:k,diff:d,skin:skinId,ts:Date.now()});
-  const best=improved?sc:+old.score;
-  let rank=0;try{rank=(await lbCol(d).where("score",">",best).get()).size+1}catch(e){}
-  return{improved,best,rank};
-}
-
 /* ====== Menük ====== */
 const hintKb=()=>T("KATT = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ","CLICK = SHOOT &nbsp;•&nbsp; R = RELOAD &nbsp;•&nbsp; Q = DOG &nbsp;•&nbsp; ESC = MENU");
 const hintTouch=()=>T("ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; ÚJRATÖLT. ÉS KUTYA GOMB &nbsp;•&nbsp; MENÜ GOMB","TAP = SHOOT &nbsp;•&nbsp; RELOAD AND DOG BUTTONS &nbsp;•&nbsp; MENU BUTTON");
@@ -1851,7 +1799,6 @@ const helpText=()=>T(
  "<p><b>PRACTICE:</b> PRACTICE in the menu takes you to a farm: shoot hen targets for 1 minute with no score and no coins.</p>"+
  "<p><b>SAVING:</b> use SAVE in the pause menu to put an unfinished game into your slot and continue it later.</p>");
 const ICONS={
- trophy:["1111111","1011101","1011101","0111110","0011100","0001000","0111110"],
  play:["1000000","1110000","1111000","1111100","1111000","1110000","1000000"],
  back:["0001000","0011000","0111111","1111111","0111111","0011000","0001000"],
  target:["0011100","0100010","1001001","1010101","1001001","0100010","0011100"],
@@ -1869,9 +1816,6 @@ const ICONS={
  plus:["0001000","0001000","0001000","1111111","0001000","0001000","0001000"]};
 function btnKind(l){
   l=l.toUpperCase();
-  if(/KITŰZ|POST TO/.test(l))return["pri","trophy"];
-  if(/RANGLISTA|LEADERBOARD/.test(l))return["sec","trophy"];
-  if(/FRISSÍT|REFRESH/.test(l))return["sec","redo"];
   if(/^(VISSZA|BACK|MÉGSEM|CANCEL)/.test(l))return["back",/^(MÉGSEM|CANCEL)/.test(l)?"x":"back"];
   if(/^(SLOT TÖRL|DELETE|IGEN|YES)/.test(l))return["dng","trash"];
   if(/^(FŐMENÜ|MAIN MENU)/.test(l))return["dng","home"];
@@ -1993,9 +1937,7 @@ function showMenu(kind,nb){
     const bestAll=Math.max(0,...slots.map(x=>x?x.stats.best:0));
     ovBest.textContent=bestAll>0?T("LEGJOBB EREDMÉNY: ","BEST SCORE: ")+fmt(bestAll):"";
     ovHint.style.display="";
-    menuBtns.append(mkBtn(T("JÁTÉK","PLAY"),()=>showMenu("slots")),
-      ...(LB.db?[mkBtn(T("RANGLISTA","LEADERBOARD"),()=>{lbFrom="title";LB.rowsFor="";showMenu("leaderboard")})]:[]),
-      mkBtn(T("HOGYAN KELL JÁTSZANI?","HOW TO PLAY"),()=>showMenu("help")),
+    menuBtns.append(mkBtn(T("JÁTÉK","PLAY"),()=>showMenu("slots")),mkBtn(T("HOGYAN KELL JÁTSZANI?","HOW TO PLAY"),()=>showMenu("help")),
       mkBtn("LANGUAGE: "+(LANG==="en"?"EN":"HU"),()=>setLang(LANG==="en"?"hu":"en")));
   }else if(kind==="slots"){
     ovTitle.textContent=T("MENTÉSI HELYEK","SAVE SLOTS");
@@ -2052,54 +1994,6 @@ function showMenu(kind,nb){
     ovBest.textContent=T("Gyakorlás: nem járt pont és coin.","Practice: no score or coins awarded.");
     menuBtns.append(mkBtn(T("ÚJRA","AGAIN"),startPractice),mkBtn(T("VISSZA","BACK"),()=>showMenu("slotmenu")));
     menuBack=()=>showMenu("slotmenu");
-  }else if(kind==="leaderboard"){
-    ovTitle.innerHTML=T("RANG<br>LISTA","LEADER<br>BOARD");
-    ovText.innerHTML=T("Felkerüléshez legalább <b>"+lbLevel(LB_MIN_KILLS)+". szint</b> kell ("+LB_MIN_KILLS+" kacsa). Nehézségenként külön lista, mindenkinek a legjobb eredménye látszik.","You need at least <b>level "+lbLevel(LB_MIN_KILLS)+"</b> ("+LB_MIN_KILLS+" ducks) to get on the board. Separate lists per difficulty, showing everyone's best run.");
-    const seg=document.createElement("div");seg.className="seg";
-    ["easy","normal","extreme"].forEach(d=>{const b=document.createElement("button");b.className="segbtn"+(d===LB.tab?" on":"");b.textContent=DN[d];b.onclick=()=>{b.blur();LB.tab=d;showMenu("leaderboard")};seg.append(b)});
-    screenBody.append(seg);
-    const box=document.createElement("div");box.className="lbrows";screenBody.append(box);
-    if(LB.rowsFor!==LB.tab){
-      box.innerHTML="<div class='lbmsg'>"+T("BETÖLTÉS…","LOADING…")+"</div>";
-      const want=LB.tab;lbLoad(want).then(()=>{if(menuKind==="leaderboard"&&LB.tab===want)showMenu("leaderboard")});
-    }else if(LB.err){
-      box.innerHTML="<div class='lbmsg'>"+T("Nem sikerült betölteni a listát.","Could not load the list.")+"</div>";
-    }else if(!LB.rows.length){
-      box.innerHTML="<div class='lbmsg'>"+T("Még senki nincs a listán. Legyél te az első!","Nobody is on the list yet. Be the first!")+"</div>";
-    }else{
-      const hd=document.createElement("div");hd.className="lbhead";
-      [ "#",T("BECENÉV","NICKNAME"),T("PONT","SCORE"),T("KACSA","DUCKS")].forEach(t=>{const e=document.createElement("span");e.textContent=t;hd.append(e)});
-      box.append(hd);
-      LB.rows.forEach((r,i)=>{
-        const row=document.createElement("div");row.className="lbrow"+(r.id===LB.uid?" me":"");
-        [["rk",i+1],["nm",cleanNick(String(r.nick||"?"))||"?"],["sc",fmt(r.score)],["dk",fmt(r.kills)]].forEach(([c,v])=>{const e=document.createElement("span");e.className=c;e.textContent=v;row.append(e)});
-        box.append(row);
-      });
-    }
-    ovBest.textContent=LB.note;
-    menuBtns.append(mkBtn(T("FRISSÍTÉS","REFRESH"),()=>{LB.rowsFor="";showMenu("leaderboard")}),mkBtn(T("VISSZA","BACK"),()=>{LB.note="";showMenu(lbFrom)}));
-    menuBack=()=>{LB.note="";showMenu(lbFrom)};
-  }else if(kind==="nick"){
-    ovTitle.textContent=T("BECENÉV","NICKNAME");
-    ovText.innerHTML=T("Pont","Score")+": <b>"+fmt(score)+"</b> • "+T("Kacsa","Ducks")+": <b>"+kills+"</b> • "+DN[difficulty.value]+"<br><br>"+T("Add meg a nevet, ami a ranglistán megjelenik (2–12 karakter). Ugyanazzal a fiókkal mindig a legjobb eredményed marad fent.","Enter the name shown on the leaderboard (2–12 characters). With the same account only your best result stays on the list.");
-    const inp=document.createElement("input");inp.id="nickIn";inp.className="nickin";inp.maxLength=12;inp.autocomplete="off";inp.spellcheck=false;
-    inp.placeholder=T("BECENÉV","NICKNAME");inp.value=cleanNick((s&&s.nick)||"");
-    screenBody.append(inp);
-    const go=mkBtn(T("KITŰZÖM A RANGLISTÁRA","POST TO LEADERBOARD"),async()=>{
-      const nick=cleanNick(inp.value);
-      if(nick.length<2){ovBest.textContent=T("Legalább 2 karakter kell!","At least 2 characters needed!");return}
-      if(s){s.nick=nick;saveSlots()}
-      go.disabled=true;ovBest.textContent=T("KÜLDÉS…","SENDING…");
-      try{
-        const r=await lbSubmit(nick);
-        LB.done=true;LB.tab=difficulty.value;LB.rowsFor="";lbFrom="over";
-        LB.note=T("RANGSOR: #","RANK: #")+(r.rank||"?")+(r.improved?"":T(" (a korábbi eredményed jobb volt)"," (your earlier result was better)"));
-        showMenu("leaderboard");
-      }catch(e){go.disabled=false;ovBest.textContent=(e&&e.code==="quota_exceeded")?T("A lista megtelt.","The list is full."):T("Nem sikerült elküldeni, próbáld újra.","Could not submit, please try again.")}
-    });
-    menuBtns.append(go,mkBtn(T("VISSZA","BACK"),()=>showMenu("over")));
-    menuBack=()=>showMenu("over");
-    setTimeout(()=>{try{inp.focus()}catch(e){}},50);
   }else if(kind==="minimenu"&&s){
     ovTitle.innerHTML=T("SZERENCSE <br>KACSA","LUCKY <br>DUCK");
     lastRemain=miniRemain();
@@ -2171,15 +2065,11 @@ function showMenu(kind,nb){
     ovTitle.innerHTML=overReason==="time"?T("IDŐ <br>LEJÁRT","TIME'S <br>UP"):"GAME <br>OVER";
     ovText.innerHTML=stat();
     ovBest.textContent=s?((nb?T("ÚJ REKORD: ","NEW RECORD: "):T("REKORD: ","BEST: "))+fmt(s.stats.best)):"";
-    if(LB.db&&LB.can===false)ovText.innerHTML+="<br>"+T("Csak megtekintő jogod van, ezért nem tudsz eredményt feltölteni.","You have view-only access, so you cannot post results.");
-    else if(lbOK()&&kills<LB_MIN_KILLS)ovText.innerHTML+="<br>"+T("A ranglistához kell még <b>"+(LB_MIN_KILLS-kills)+" kacsa</b> ("+lbLevel(LB_MIN_KILLS)+". szint).","You need <b>"+(LB_MIN_KILLS-kills)+" more ducks</b> (level "+lbLevel(LB_MIN_KILLS)+") for the leaderboard.");
-    if(lbOK()&&kills>=LB_MIN_KILLS&&!LB.done)menuBtns.append(mkBtn(T("KITŰZÖM A RANGLISTÁRA","POST TO LEADERBOARD"),()=>showMenu("nick")));
-    if(LB.db)menuBtns.append(mkBtn(T("RANGLISTA","LEADERBOARD"),()=>{lbFrom="over";LB.tab=difficulty.value;LB.rowsFor="";showMenu("leaderboard")}));
     menuBtns.append(
       mkBtn(T("ÚJRA","AGAIN"),()=>{diffFrom="over";showMenu("difficulty")}),
       mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="over";showMenu("store")}),
       mkBtn(T("BEÁLLÍTÁSOK","SETTINGS"),()=>{settingsFrom="over";showMenu("settings")}),
-      mkBtn(T("FŐMENÜ","MAIN MENU"),toTitle));
+      mkBtn(T("FŐMENÜ","MAIN MENU"),toSlotMenu));
   }
   layoutMenu();
   overlay.style.display="flex";
@@ -2551,14 +2441,11 @@ canvas.addEventListener("pointerdown",e=>{
 });
 canvas.addEventListener("pointerleave",()=>{if(document.pointerLockElement!==canvas)mouse.over=false});
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
-const isTyping=e=>!!(e.target&&e.target.tagName==="INPUT"&&e.target.type!=="range");
 addEventListener("keydown",e=>{
-  if(!isTyping(e)){
   if(e.key.toLowerCase()==="r")doReload();
   if(e.key.toLowerCase()==="q")callDog();
   if(e.key.toLowerCase()==="e")useAbility();
   if(e.key.toLowerCase()==="m"){Snd.mute();syncMute()}
-  }
   if(e.key==="Escape"){
     if(performance.now()-lastLockLoss<250)return;     // ugyanaz az ESC már kilépett az egérzárból
     if((state==="play"||state==="mini"||state==="practice")&&!paused)openPause();
@@ -2595,7 +2482,7 @@ function toggleFS(){
 }
 fsBtn.onclick=()=>{fsBtn.blur();toggleFS()};
 $("fsTop").onclick=e=>{e.currentTarget.blur();toggleFS()};
-addEventListener("keydown",e=>{if(e.key.toLowerCase()==="f"&&!e.ctrlKey&&!e.metaKey&&!isTyping(e))toggleFS()});
+addEventListener("keydown",e=>{if(e.key.toLowerCase()==="f"&&!e.ctrlKey&&!e.metaKey)toggleFS()});
 if(standalone())$("fsTop").style.display="none";
 function syncFS(){const on=!!fsOn();$("fsTop").textContent=on?T("KILÉP","EXIT"):T("TELJES","FULL");fsBtn.textContent=on?T("KILÉPÉS A TELJES KÉPERNYŐBŐL","EXIT FULLSCREEN"):T("TELJES KÉPERNYŐ","FULLSCREEN");setTimeout(resize,150)}
 document.addEventListener("fullscreenchange",syncFS);document.addEventListener("webkitfullscreenchange",syncFS);
@@ -2610,7 +2497,6 @@ mouse.x=VW/2;mouse.y=H/2;
 dog.x=dogSpot().x;
 applyLangStatic();
 showMenu("title");
-lbInit();
 syncMute();
 updateHUD();
 requestAnimationFrame(loop);
