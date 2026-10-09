@@ -212,6 +212,29 @@ body.touch #titleArt{filter:none}
 .skincard .st.can{color:var(--gold)}.skincard .st.cant{color:#ff6a6a}
 .skincard.eq .st{color:#a7f070}.skincard.own .st{color:#73eff7}
 .help{text-align:left;margin-top:14px}
+#achStack{position:fixed;left:12px;bottom:12px;z-index:80;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;max-width:calc(100vw - 24px)}
+.achpop{display:flex;gap:10px;align-items:center;background:#141a38;border:3px solid #ffcd75;box-shadow:0 0 0 3px #000,5px 5px 0 3px rgba(0,0,0,.5);padding:8px 14px 8px 8px;font-family:var(--px);transform:translateX(-130%);opacity:0;transition:transform .4s cubic-bezier(.2,.9,.3,1.15),opacity .3s;min-width:250px}
+.achpop.in{transform:none;opacity:1}
+.achpop .ic canvas{width:40px;height:40px;image-rendering:pixelated;display:block}
+.achpop .l1{font-size:6px;margin-bottom:5px}.achpop .l2{font-size:9px;color:#fff;margin-bottom:4px;line-height:1.4}
+.achpop .l3{font-size:6px;color:#94b0c2;line-height:1.5;max-width:230px}.achpop .l3:empty{display:none}.achpop .l4{font-size:8px;color:#ffcd75;margin-top:4px}
+.achv{text-align:left}
+.achsec{font-family:var(--px);font-size:9px;color:var(--gold);margin:16px 0 8px;display:flex;justify-content:space-between;gap:8px}
+.alist{display:grid;grid-template-columns:1fr 1fr;gap:8px}.alist.d3{grid-template-columns:repeat(3,1fr)}
+.acard{display:flex;gap:8px;align-items:center;background:#2b2f3a;border:3px solid #4a4f5c;padding:8px;font-family:var(--px);color:#7c8494}
+.acard.done{background:#1c4a2a;border-color:#a7f070;color:#d8f5c8}
+.acard .aic canvas{width:28px;height:28px;image-rendering:pixelated;display:block}
+.acard .atx{flex:1;min-width:0}.acard .anm{font-size:8px;line-height:1.5;margin-bottom:3px;color:#9aa2b2}.acard.done .anm{color:#fff}
+.acard .ads{font-size:6px;line-height:1.6;margin-bottom:5px}
+.acard .apr{display:flex;align-items:center;gap:6px;font-size:6px}
+.acard .abar{flex:1;height:5px;background:#14161c;border:1px solid #000}.acard .abar i{display:block;height:100%;background:#6b7384}.acard.done .abar i{background:#a7f070}
+.acard .art{text-align:center;font-size:6px}.acard .chip{border:2px solid;padding:2px 4px;margin-bottom:4px}
+.acard .acoin{color:#8a8f9c;font-size:8px}.acard.done .acoin{color:#ffcd75}
+.abonus{margin-top:8px;font-family:var(--px);font-size:7px;text-align:center;padding:6px;border:2px dashed #4a4f5c;color:#7c8494}.abonus.on{color:#a7f070;border-color:#a7f070}
+.ftabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.ftab{font-family:var(--px);font-size:7px;padding:7px 10px;background:#29366f;color:var(--tc);border:3px solid #000;cursor:pointer}.ftab.on{background:#000;border-color:var(--tc)}
+@media (max-width:700px){.alist,.alist.d3{grid-template-columns:1fr}.achpop{min-width:200px}.achpop .l2{font-size:7px}}
+
 .help p{margin:0 0 10px}
 @media (max-height:520px),(max-width:900px){
  .slots,.diffs{gap:6px;margin-top:8px}
@@ -305,6 +328,7 @@ body.touch #titleArt{filter:none}
 <div id="controls"><button class="btn" id="fsTop" data-en="FULL">TELJES</button><button class="btn" id="muteBtn">HANG</button><button class="btn" id="menuBtn" data-en="MENU">MENÜ</button></div>
 
 <div id="toast"></div>
+<div id="achStack"></div>
 <div id="hurt"></div>
 <div id="crt"></div>
 <button class="btn" id="reloadBtn" data-en="RE-<br>LOAD">ÚJRA-<br>TÖLT</button>
@@ -504,7 +528,7 @@ const reloadTime=()=>state!=="practice"&&skinId==="amethyst"?1.2:2;
 function startReload(){
   if((state!=="play"&&state!=="practice")||reloadLeft>0||ammo>=maxAmmo())return;
   reloadTotal=reloadLeft=reloadTime();reloadFrom=ammo;
-  Snd.reloadStart();showToast(T("ÚJRATÖLTÉS…","RELOADING…"),"#94b0c2");updateHUD();
+  Snd.reloadStart();showToast(T("ÚJRATÖLTÉS…","RELOADING…"),"#94b0c2");updateHUD();track("reload",1);
 }
 function updateReload(dt){
   loadKick=Math.max(0,loadKick-dt*5);
@@ -1066,7 +1090,7 @@ function startPractice(){
   state="practice";ammo=maxAmmo();updateHUD();updatePracticeHUD();Snd.start();showToast(T("GYAKORLÁS INDUL!","PRACTICE BEGINS!"));lock();
 }
 function leavePractice(){state="menu";resetRun();showMenu(practiceFrom)}
-function endPractice(){state="menu";resetRun();showMenu("practiceover")}
+function endPractice(){track("practice",1);track("prun",practice.hits);state="menu";resetRun();showMenu("practiceover")}
 function updatePractice(dt){
   timeLeft=Math.max(0,timeLeft-dt);
   const sec=Math.ceil(timeLeft);if(sec!==lastSec){lastSec=sec;updateTimerHUD()}
@@ -1102,7 +1126,7 @@ function practiceHit(mx,my){
   practice.shots++;
   if(best){
     const s=best.slot;
-    best.mode="hit";best.ht=0;practice.hits++;practice.streak++;practice.best=Math.max(practice.best,practice.streak);practice.react.push(best.age);
+    best.mode="hit";best.ht=0;practice.hits++;track("phits",1);practice.streak++;practice.best=Math.max(practice.best,practice.streak);practice.react.push(best.age);
     Snd.clang();hitstop=.03;
     pop(best.age.toFixed(2)+(LANG==="en"?" s":" mp"),s.x,s.y-18*s.sc,"#ffffff");
     for(let n=0;n<14;n++){const a=rand(0,6.28),sp=rand(20,80);P({x:s.x,y:s.y-8*s.sc,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-25,life:rand(.4,.9),c:pick(["#ffffff","#e8a050","#b86a28","#f4d090"]),s:pick([1,2]),g:120,dr:1.2})}
@@ -1287,13 +1311,23 @@ function spawnDuck(){
   const side=Math.random()<.5?-1:1;
   const y=rand(H*.14,H*.5),x=side<0?-16:VW+16;
   const angle=side<0?rand(-.15,.28):rand(Math.PI-.28,Math.PI+.15);
-  ducks.push({x,y,vx:Math.cos(angle)*speed*K,vy:Math.sin(angle)*speed*K,speed,baseSpeed:speed,
+  let kind="normal";
+  if(kills>=4&&ducks.filter(o=>o.kind&&o.kind!=="normal").length<2){
+    const opts=[["golden",true,.055+(mode==="extreme"?.02:0)],["armored",kills>=8,.09],["bomb",kills>=6&&!ducks.some(o=>o.kind==="bomb"),.075],["clock",kills>=12,.04],["heart",hp<3,.05]];
+    let r=Math.random();for(const[k,ok,pr]of opts){if(!ok)continue;if(r<pr){kind=k;break}r-=pr}
+  }
+  if(kind==="golden")speed*=1.35;else if(kind==="bomb")speed*=.85;
+  ducks.push({x,y,vx:Math.cos(angle)*speed*K,vy:Math.sin(angle)*speed*K,speed,baseSpeed:speed,kind,hp:kind==="armored"?2:1,flash:0,
     type:pick(["straight","sine","zigzag","dive","loop"]),extreme,t:0,phase:rand(0,Math.PI*2),
     face:side<0?1:-1,trail:[],trailT:0,dashT:rand(.6,1.6),dash:0});
+  if(kind==="golden"){showToast(T("ARANYKACSA!","GOLDEN DUCK!"),"#ffd700");Snd.ding()}
+  else if(kind==="bomb")showToast(T("BOMBA-KACSA!  NE LŐD LE!","BOMB DUCK!  DON'T SHOOT IT!"),"#ff6a6a");
   if(Math.random()<.45)Snd.quack(.5);
 }
 function updateDuck(d,dt){
-  d.t+=dt;
+  if(d.boss){updateBoss(d,dt);return}
+  d.t+=dt;if(d.flash>0)d.flash-=dt;
+  if(d.kind==="golden"&&Math.random()<dt*14)P({x:d.x+rand(-6,6),y:d.y+rand(-5,5),vx:rand(-8,8),vy:rand(-8,8),life:.5,c:pick(["#ffd700","#ffffff"]),s:1,g:0,dr:1});
   switch(d.type){
     case "straight":d.vy+=Math.sin(d.t*1.8+d.phase)*18*K*dt;break;
     case "sine":d.vy+=Math.sin(d.t*4+d.phase)*120*K*dt;break;
@@ -1336,8 +1370,93 @@ function drawDuck(d){
     const s=d.extreme?2:1;ctx.fillStyle=d.extreme?"#ffe066":"#ffffff";
     ctx.fillRect(Math.round(p.x),Math.round(p.y),s,s);
   }
-  const set=d.extreme?DUCKS_X:DUCKS;
+  if(d.boss){drawBoss(d);return}
+  const set=d.flash>0?DUCKS_W:SETS[d.kind]||(d.extreme?DUCKS_X:DUCKS);
   drawSpr(set[[0,1,2,1][Math.floor(d.t*11)%4]],d.x,d.y,d.face,false);
+  const ic={heart:"heart",clock:"clock",bomb:"bomb"}[d.kind];
+  if(ic){
+    const col=d.kind==="bomb"?(((frame>>2)&1)?"#e43b44":"#ffffff"):d.kind==="heart"?"#ff4f8b":"#73eff7";
+    const key=ic+col;(ICC[key]||(ICC[key]=iconCv(ic,col)));
+    ctx.drawImage(ICC[key],Math.round(d.x)-5,Math.round(d.y)-22+Math.round(Math.sin(d.t*6)));
+  }
+  if(d.kind==="armored"){ctx.fillStyle="#000";ctx.fillRect(Math.round(d.x)-6,Math.round(d.y)-17,12,4);
+    for(let n=0;n<2;n++){ctx.fillStyle=n<d.hp?"#c8d0dc":"#e43b44";ctx.fillRect(Math.round(d.x)-5+n*5,Math.round(d.y)-16,4,2)}}
+}
+
+/* ====== Speciális kacsák + sas-boss ====== */
+const mkPal=o=>Object.assign({k:"#1a1c2c",w:"#f4f4f4",o:"#ffa020"},o);
+const SETS={
+ golden:duckFrames(mkPal({g:"#ffd700",w:"#fff8d0",b:"#e8a820",d:"#a8741c",y:"#fff0a0",e:"#ffcd30"})),
+ armored:duckFrames(mkPal({g:"#8ea4b8",w:"#e8f0f8",b:"#6a7f94",d:"#3e4f60",y:"#b8c8d8",e:"#9aaec0"})),
+ bomb:duckFrames(mkPal({g:"#3a3a48",w:"#d0d0d8",b:"#2a2a34",d:"#16161e",y:"#4a4a58",e:"#34343e",o:"#e43b44"})),
+ heart:duckFrames(mkPal({g:"#ff7aa8",b:"#ff4f8b",d:"#b02a60",y:"#ffc0d8",e:"#e0407c"})),
+ clock:duckFrames(mkPal({g:"#5cb8ff",b:"#3f86e0",d:"#25508e",y:"#a0d0ff",e:"#5a9ae8"}))};
+const ICC={};
+function sparks(x,y,cols,n,sp0){for(let i=0;i<n;i++){const a=rand(0,6.28),sp=rand(20,sp0||90);P({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-15,life:rand(.3,.8),c:pick(cols),s:pick([1,2]),g:80,dr:1.2})}}
+function hitDuck(i){
+  const d=ducks[i];
+  if(d.boss){hurtBoss(d,i);return}
+  if(d.kind==="armored"&&d.hp>1){
+    d.hp--;d.flash=.2;Snd.clang();hitstop=.04;shake=.1;
+    pop("CLANG!",d.x,d.y-12,"#c8d0dc");sparks(d.x,d.y,["#ffffff","#ffe066","#c8d0dc"],14);return;
+  }
+  killDuck(i);
+}
+function bombHit(i){
+  const d=ducks[i];ducks.splice(i,1);
+  Snd.boom();screenFlash=.22;shake=.4;combo=0;runDirty=true;
+  for(let n=0;n<44;n++){const a=(n/44)*6.283,sp=rand(40,150);P({x:d.x,y:d.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(.3,.7),c:pick(["#ff9020","#ffe066","#e43b44","#ffffff","#3a3a48"]),s:pick([1,2,3]),g:0,dr:2})}
+  pop(T("BUMM!","BOOM!"),d.x,d.y-8,"#ff6a6a");
+  hurt(T("BOMBA!  -1 SZÍV","BOMB!  -1 HEART"));
+  pending.push(.5);updateHUD();
+}
+function spawnBoss(){
+  RUN.nextBoss=1e9;
+  const side=Math.random()<.5?-1:1,hpb={easy:6,normal:8,extreme:11}[difficulty.value]+2*RUN.bossN;
+  ducks.push({boss:true,kind:"boss",x:side<0?-30:VW+30,y:H*.3,vx:side*52,vy:0,speed:260,baseSpeed:260,hp:hpb,maxhp:hpb,flash:0,life:26,
+    type:"straight",extreme:false,t:0,phase:0,face:side,trail:[],trailT:0,dashT:9,dash:0,y0:H*.3});
+  Snd.eagle();showToast(T("A SAS ÉRKEZIK!","THE EAGLE ARRIVES!"),"#ff6ad8");screenFlash=.1;
+}
+function updateBoss(d,dt){
+  d.t+=dt;d.life-=dt;if(d.flash>0)d.flash-=dt;
+  if(d.life>0){
+    d.x+=d.vx*dt;d.y=d.y0+Math.sin(d.t*1.3)*30+Math.sin(d.t*3.1)*6;
+    if(d.x<26&&d.vx<0)d.vx=Math.abs(d.vx);else if(d.x>VW-26&&d.vx>0)d.vx=-Math.abs(d.vx);
+  }else{d.y0-=dt*50;d.y=d.y0;d.x+=d.vx*dt}
+  d.face=d.vx<0?-1:1;
+}
+function hurtBoss(d,i){
+  d.hp--;d.flash=.15;Snd.clang();hitstop=.05;shake=.14;
+  sparks(d.x,d.y,["#9a6a3a","#f4f4f4","#ffe066"],12);pop("-1",d.x,d.y-24,"#ffffff");
+  if(d.hp>0)return;
+  const sl=S(),pts=3000+500*RUN.bossN,cn=Math.round((COIN[difficulty.value]||5)*10*(skinId==="emerald"?2:1));
+  score+=pts;timeLeft+=10;runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}runDirty=true;
+  ducks.splice(i,1);RUN.bossN++;RUN.nextBoss=kills+25;
+  Snd.boom();setTimeout(Snd.bonus,200);setTimeout(Snd.coin,350);hitstop=.12;screenFlash=.25;shake=.5;
+  sparks(d.x,d.y,["#9a6a3a","#f4f4f4","#ffe066","#ff9020","#e43b44"],70,170);
+  pop("+"+pts,d.x,d.y-8,"#ffe066");pop("+"+cn+" COIN",d.x,d.y+10,"#ffcd75");
+  showToast(T("SAS LEGYŐZVE!  +"+pts+"  +10 MP","EAGLE DEFEATED!  +"+pts+"  +10 S"),"#ff6ad8");
+  track("boss",1);track("bossrun",RUN.bossN);track("coins",cn);updateHUD();
+}
+function drawBoss(d){
+  const x=Math.round(d.x),y=Math.round(d.y),fl=d.flash>0;
+  const C=fl?{b:"#fff",d:"#fff",l:"#fff",h:"#fff",k:"#fff"}:{b:"#6b3f1e",d:"#3e2410",l:"#9a6a3a",h:"#f4f4f4",k:"#ffb020"};
+  const w=[-11,-3,6,0][Math.floor(d.t*7)%4];
+  ctx.save();ctx.translate(x,y);ctx.scale(d.face<0?-1:1,1);
+  const wing=(ox,col)=>{for(let k=0;k<24;k++){const hgt=Math.max(2,9-((k/3)|0)),py=-3+Math.round((w+3)*(k/23)),px=-3-k+ox;ctx.fillStyle=col;ctx.fillRect(px,py-(w<0?hgt-2:0),1,hgt)}};
+  wing(2,C.d);
+  ctx.fillStyle=C.d;ctx.fillRect(-17,0,8,4);ctx.fillRect(-19,1,3,3);
+  ctx.fillStyle=C.b;ctx.fillRect(-9,-4,17,10);ctx.fillRect(-7,-5,13,1);ctx.fillRect(-7,6,12,1);
+  ctx.fillStyle=C.l;ctx.fillRect(-6,-2,11,3);
+  wing(0,C.b);
+  ctx.fillStyle=C.k;ctx.fillRect(1,7,2,3);ctx.fillRect(-3,7,2,3);
+  ctx.fillStyle=C.h;ctx.fillRect(6,-8,7,7);ctx.fillRect(7,-9,5,1);
+  ctx.fillStyle=C.k;ctx.fillRect(13,-6,4,3);ctx.fillRect(15,-3,2,2);
+  ctx.fillStyle=fl?"#000":"#1a1c2c";ctx.fillRect(10,-6,2,2);ctx.fillRect(9,-8,4,1);
+  ctx.restore();
+  const bw=32;ctx.fillStyle="#000";ctx.fillRect(x-bw/2-1,y-27,bw+2,6);
+  ctx.fillStyle="#3a1010";ctx.fillRect(x-bw/2,y-26,bw,4);
+  ctx.fillStyle="#ff6ad8";ctx.fillRect(x-bw/2,y-26,Math.round(bw*d.hp/d.maxhp),4);
 }
 
 /* ====== Kutya ====== */
@@ -1428,7 +1547,7 @@ function callDog(){
 function dogGrab(){
   const l=dog.tgt,i=l?lying.indexOf(l):-1;
   if(i>=0){
-    lying.splice(i,1);Snd.bark(1);
+    lying.splice(i,1);Snd.bark(1);track("fetch",1);
     score+=l.pts;dog.carry=true;                                // a kacsa pontja duplázódik
     pop("×2  +"+l.pts,dog.x,dog.y-30,"#ffe066");
     showToast(T("APORT!  KACSA ×2  +","FETCH!  DUCK ×2  +")+l.pts,"#ffe066");
@@ -1502,16 +1621,20 @@ function shoot(mx,my){
   // találat vizsgálata
   if(state==="mini"){miniHit(mx,my);updateHUD();return}
   if(state==="practice"){practiceHit(mx,my);updateHUD();return}
-  let hit=-1,bestD=Infinity;
-  ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(touchMode?13:9)+(skinId==="camo"?4:0)&&dist<bestD){bestD=dist;hit=i}});
-  if(hit>=0)killDuck(hit);else miss(mx,my);
+  let hit=-1,bestD=Infinity;RUN.shots++;
+  ducks.forEach((d,i)=>{const dist=Math.hypot(mx-d.x,my-d.y);if(dist<(d.boss?17:(touchMode?13:9)+(skinId==="camo"?4:0))&&dist<bestD){bestD=dist;hit=i}});
+  if(hit>=0){
+    if(ducks[hit].kind==="bomb"){RUN.streak=0;bombHit(hit)}
+    else{RUN.hits++;RUN.streak++;track("streak",RUN.streak);hitDuck(hit)}
+  }else{RUN.streak=0;miss(mx,my)}
   if(ammo===0)startReload();
   updateHUD();
 }
 function killDuck(i,splash){
   const d=ducks[i];
   const lucky=skinId==="rainbow"&&Math.random()<.15;
-  const near=(!splash&&skinId==="fire")?ducks.filter(o=>o!==d&&Math.hypot(o.x-d.x,o.y-d.y)<32):[];
+  const near=(!splash&&skinId==="fire")?ducks.filter(o=>o!==d&&!o.boss&&o.kind!=="bomb"&&o.kind!=="armored"&&Math.hypot(o.x-d.x,o.y-d.y)<32):[];
+  const kd=d.kind||"normal";
   const speedBonus=Math.round(Math.min(900,d.speed*2.2));
   const maneuverBonus={straight:0,sine:150,zigzag:300,dive:450,loop:650}[d.type];
   const heightBonus=Math.round(Math.max(0,(H*.65-d.y))*5);
@@ -1519,17 +1642,25 @@ function killDuck(i,splash){
   combo++;
   const comboBonus=Math.min(1000,combo*75);
   let pts=500+speedBonus+maneuverBonus+heightBonus+extremeBonus+comboBonus;
-  pts=Math.round(pts*(skinId==="gold"?1.5:1)*(lucky?3:1));
-  score+=pts;kills++;
+  if(kd==="armored")pts+=600;else if(kd==="heart"||kd==="clock")pts+=300;
+  pts=Math.round(pts*(skinId==="gold"?1.5:1)*(lucky?3:1)*(kd==="golden"?4:1));
+  score+=pts;kills++;RUN.noHeart++;
   if(skinId==="pink")timeLeft+=1;
   if(skinId==="stealth"&&!shield&&++kSince>=5){shield=true;kSince=0;setTimeout(()=>{Snd.shield();showToast(T("PAJZS KÉSZ!","SHIELD READY!"),"#73eff7")},500)}
   if(lucky){setTimeout(()=>showToast(T("SZERENCSE!  ×3 PONT ÉS ×2 COIN","LUCKY!  ×3 SCORE & ×2 COINS"),"#ffe066"),350);setTimeout(Snd.bonus,200)}runDirty=true;Snd.hit();Snd.fall();
-  {const cn=Math.round((COIN[difficulty.value]||5)*(skinId==="emerald"?2:1)*(lucky?2:1)),sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
-   pop("+"+cn+" COIN",d.x,d.y+22,"#ffcd75");setTimeout(Snd.coin,160)}
+  {const cn=Math.round((COIN[difficulty.value]||5)*(skinId==="emerald"?2:1)*(lucky?2:1)*(kd==="golden"?5:1)),sl=S();runCoins+=cn;if(sl){sl.coins+=cn;saveSlots()}
+   pop("+"+cn+" COIN",d.x,d.y+22,"#ffcd75");setTimeout(Snd.coin,160);track("coins",cn)}
+  track("kills",1);if(d.extreme)track("xkills",1);track("run",kills);if(difficulty.value==="extreme")track("run_x",kills);
+  track("combo",combo);track("runscore",score);track("flaw",RUN.noHeart);
+  if(kills===20&&RUN.t<=50)track("fast20",1);
+  if(kd==="golden"){track("golden",1);for(let n=0;n<26;n++)P({x:d.x,y:d.y,vx:rand(-90,90),vy:rand(-90,60),life:rand(.5,1.2),c:pick(["#ffd700","#fff8d0","#ffffff"]),s:pick([1,2]),g:60,dr:1})}
+  else if(kd==="armored")track("armored",1);
+  else if(kd==="clock"){timeLeft+=5;track("clock",1);pop("+5"+T(" MP"," S"),d.x,d.y+8,"#5cb8ff")}
+  else if(kd==="heart"&&hp<3){hp++;track("heartduck",1);Snd.bonus();showToast(T("+1 SZÍV!","+1 HEART!"),"#ff7aa8");updateHUD()}
   hitstop=.06;screenFlash=.06;
   const bonus=kills%BONUS_EVERY===0,msg=pick(T(["BANG!","TISZTA LÖVÉS!","ELTALÁLTAD!","ZSENIÁLIS!","TÖKÉLETES!"],["BANG!","CLEAN SHOT!","NAILED IT!","BRILLIANT!","PERFECT!"]))+"  +"+pts;
   if(bonus){
-    timeLeft+=BONUS_TIME;setTimeout(Snd.bonus,250);
+    track("bonus",1);timeLeft+=BONUS_TIME;setTimeout(Snd.bonus,250);
     showToast("+"+BONUS_TIME+T(" MP IDŐ!  "," S TIME!  ")+msg,"#a7f070");
     pop("+"+BONUS_TIME+T(" MP"," S"),d.x,d.y+8,"#a7f070");
     timeCard.classList.add("bonus");setTimeout(()=>timeCard.classList.remove("bonus"),700);
@@ -1545,7 +1676,7 @@ function killDuck(i,splash){
     const ang=(n/12)*Math.PI*2,sp=rand(90,150);
     P({x:d.x,y:d.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,life:.22,c:pick(["#ffe066","#ffffff"]),s:2,dr:3});
   }
-  falling.push({x:d.x,y:d.y,vx:d.vx*.15,vy:-30,face:d.face,flash:.16,pts,gy:rand(GY+36,GY+60)});
+  falling.push({x:d.x,y:d.y,vx:d.vx*.15,vy:-30,face:d.face,flash:.16,pts,set:SETS[kd],gy:rand(GY+36,GY+60)});
   ducks.splice(i,1);pending.push(rand(.25,.7));
   updateHUD();
   if(near.length){
@@ -1565,10 +1696,14 @@ function miss(mx,my){
     P({x:mx,y:my,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-(ground?35:0),life:rand(.25,.6),c:pick(cols),s:pick([1,2]),g:ground?260:60,dr:1.5});
   }
   for(let i=0;i<3;i++)P({x:mx,y:my,vx:rand(-8,8),vy:-rand(6,16),life:rand(.4,.7),c:"#c8ccd8",s:2,sm:true});
+  hurt(T("MELLÉ!  -1 SZÍV","MISS!  -1 HEART"));
+}
+function hurt(msg){
   if(shield){shield=false;kSince=0;Snd.shield();showToast(T("A PAJZS MEGVÉDETT!","SHIELD BLOCKED IT!"),"#73eff7");return}
-  hp=Math.max(0,hp-1);
+  RUN.noHeart=0;
+  hp=Math.max(0,hp-1);track("ouch",1);
   hurtEl.classList.remove("go");void hurtEl.offsetWidth;hurtEl.classList.add("go");
-  showToast(hp>0?T("MELLÉ!  -1 SZÍV","MISS!  -1 HEART"):T("ELFOGYTAK A SZÍVEID!","YOU RAN OUT OF HEARTS!"),"#ff6a6a");
+  showToast(hp>0?msg:T("ELFOGYTAK A SZÍVEID!","YOU RAN OUT OF HEARTS!"),"#ff6a6a");
   if(hp<=0){Snd.over();overReason="hp";state="over";overTimer=1.1;reloadTimer=0}
 }
 function useAbility(){
@@ -1590,7 +1725,7 @@ function reload(){ammo=maxAmmo();pumpT=.3;Snd.pump();updateHUD()}
 
 /* ====== Játékmenet ====== */
 function resetRun(){
-  score=0;combo=0;kills=0;ammo=maxAmmo();hp=3;prevHp=3;runCoins=0;slowT=0;abCd=0;shield=false;kSince=0;reloadLeft=0;shellFly=[];loadKick=0;waveT=9;
+  resetR();score=0;combo=0;kills=0;ammo=maxAmmo();hp=3;prevHp=3;runCoins=0;slowT=0;abCd=0;shield=false;kSince=0;reloadLeft=0;shellFly=[];loadKick=0;waveT=9;
   timeLeft=START_TIME;overReason="hp";lastSec=-1;hitstop=0;screenFlash=0;
   tint[0]=tint[1]=tint[2]=255;sunY=SUNY[0];
   ducks=[];falling=[];parts=[];pending=[];lying=[];spawnTimer=0;reloadTimer=0;overTimer=0;paused=false;
@@ -1611,7 +1746,8 @@ function startGame(run){
     sunY=SUNY[ph];
     updateHUD();
   }
-  state="play";runDirty=!!run;Snd.start();
+  if(run){RUN.t=999;RUN.nextBoss=(Math.floor(kills/25)+1)*25}
+  state="play";runDirty=!!run;Snd.start();track("games",1);
   showToast(run?T("FOLYTATÁS!","CONTINUING!"):T("VADÁSZAT INDUL!","THE HUNT BEGINS!"));
   spawnDuck();spawnDuck();
   lock();
@@ -1634,7 +1770,9 @@ function resumeGame(){hideMenu();paused=false;last=performance.now();lock()}
 function showOver(){
   const s=S();let nb=false;
   if(s){
-    s.stats.games++;s.stats.ducks+=kills;
+    s.stats.games++;s.stats.ducks+=kills;track("runscore",score);track("run",kills);
+    if(RUN.shots>=30)track("acc30",Math.round(RUN.hits/RUN.shots*100));
+    if(RUN.shots>=40)track("acc40",Math.round(RUN.hits/RUN.shots*100));
     if(score>s.stats.best){s.stats.best=score;nb=true}
     s.played=Date.now();saveSlots();
   }
@@ -1735,7 +1873,7 @@ function miniHit(mx,my){
     }else showToast("+"+p+" COIN!","#a7f070");
   }
 }
-function endMini(){state="menu";resetRun();showMenu("miniover")}
+function endMini(){track("mini",1);if(mini.prize>0)track("minibig",mini.prize);state="menu";resetRun();showMenu("miniover")}
 function leaveMini(){state="menu";resetRun();showMenu("slotmenu")}
 
 /* ====== Mentési helyek (3 slot): beállítások, statisztika, félbehagyott játék ====== */
@@ -1745,6 +1883,7 @@ function normSlot(s){
   if(!Array.isArray(s.owned))s.owned=[];
   if(!s.owned.includes("classic"))s.owned.push("classic");
   if(!s.owned.includes(s.skin))s.skin="classic";
+  ensureX(s);if(!s.daily)s.daily=null;
   return s;
 }
 const DN={get easy(){return T("KÖNNYŰ","EASY")},get normal(){return T("NORMÁL","NORMAL")},get extreme(){return T("EXTRÉM","EXTREME")}};
@@ -1757,7 +1896,7 @@ try{
 function saveSlots(){try{localStorage.setItem(SLOT_KEY,JSON.stringify(slots))}catch(e){storageOK=false}}
 function newSlot(i){
   return{name:"SLOT "+(i+1),created:Date.now(),played:0,
-    settings:{sens:1,diff:"normal"},stats:{best:0,ducks:0,games:0},run:null,coins:0,owned:["classic"],skin:"classic"};
+    settings:{sens:1,diff:"normal"},stats:{best:0,ducks:0,games:0},run:null,coins:0,owned:["classic"],skin:"classic",st:{},ach:{},daily:null};
 }
 function S(){return cur>=0?slots[cur]:null}
 function applySlot(){
@@ -1774,6 +1913,206 @@ function saveRun(){
 }
 const fmt=n=>(+n||0).toLocaleString(T("hu-HU","en-US"));
 
+/* ====== Achievementek + napi kihívások ====== */
+const TIERS={easy:{c:"#d08c58",hu:"KÖNNYŰ",en:"EASY"},medium:{c:"#c8d0dc",hu:"KÖZEPES",en:"MEDIUM"},hard:{c:"#ffcd75",hu:"NEHÉZ",en:"HARD"},legend:{c:"#ff6ad8",hu:"LEGENDÁS",en:"LEGENDARY"}};
+const MAXK=new Set(["combo","streak","runscore","run","run_x","flaw","acc30","acc40","fast20","minibig","prun","bossrun"]);
+// [id, szint, coin, számláló, cél, név HU, név EN, leírás HU, leírás EN]
+const ACH=[
+ ["first","easy",10,"kills",1,"ELSŐ VÉR","FIRST BLOOD","Lődd le az első kacsádat.","Shoot your very first duck."],
+ ["k25","easy",10,"kills",25,"ROZSDÁTLAN","WARMING UP","Lőj le összesen 25 kacsát.","Shoot 25 ducks in total."],
+ ["k100","easy",15,"kills",100,"SZÁZAS KLUB","CENTURY CLUB","Lőj le összesen 100 kacsát.","Shoot 100 ducks in total."],
+ ["c3","easy",10,"combo",3,"LÁNCREAKCIÓ","CHAIN REACTION","Érj el 3-as láncot.","Reach a 3× combo."],
+ ["dog","easy",10,"fetch",1,"A KUTYA BARÁTJA","MAN'S BEST FRIEND","Küldd el egyszer a kutyát aportra.","Send the dog to fetch once."],
+ ["skin1","easy",15,"skins",2,"VÁSÁRLÓ","SHOPPER","Vegyél meg egy skint a boltban.","Buy a skin in the shop."],
+ ["lucky","easy",10,"mini",1,"SZERENCSEJÁTÉKOS","HIGH ROLLER","Játssz egyet a szerencse játékkal.","Play the Lucky Duck game once."],
+ ["prac","easy",10,"practice",1,"GYAKORLAT","PRACTICE RUN","Fejezz be egy gyakorló kört a farmon.","Finish one practice run on the farm."],
+ ["lvl3","easy",15,"run",20,"NAPLEMENTE","SUNSET HUNTER","Érj el 20 kacsát egyetlen játékban.","Reach 20 ducks in a single run."],
+ ["bonus","easy",10,"bonus",1,"PLUSZ IDŐ","OVERTIME","Szerezz +15 mp időt 10 kacsával.","Earn +15 s bonus time with 10 ducks."],
+ ["reload","easy",10,"reload",10,"TÖLTÉNYGYÁR","AMMO RUN","Tölts újra 10-szer.","Reload 10 times."],
+ ["hens","easy",10,"phits",10,"FARMER","FARMHAND","Találj el 10 tyúkot gyakorláskor.","Hit 10 hens in practice."],
+ ["coins100","easy",10,"coins",100,"ZSEBPÉNZ","POCKET MONEY","Keress 100 coint kacsák lövésével.","Earn 100 coins by shooting ducks."],
+ ["gold1","easy",20,"golden",1,"ARANYLÁZ","GOLD RUSH","Lőj le egy aranykacsát.","Shoot a golden duck."],
+ ["ouch","easy",10,"ouch",1,"AU!","OUCH","Veszíts el egy szívet.","Lose a heart."],
+
+ ["k250","medium",30,"kills",250,"VADÁSZSZEZON","HUNTING SEASON","Lőj le összesen 250 kacsát.","Shoot 250 ducks in total."],
+ ["c8","medium",35,"combo",8,"TŰZBEN","ON FIRE","Érj el 8-as láncot.","Reach an 8× combo."],
+ ["st15","medium",40,"streak",15,"STABIL KÉZ","STEADY HAND","15 találat egymás után, mellélövés nélkül.","Land 15 hits in a row without a miss."],
+ ["sc20k","medium",35,"runscore",20000,"PONTVADÁSZ","SCORE CHASER","Szerezz 20 000 pontot egyetlen játékban.","Score 20,000 points in a single run."],
+ ["lvl5","medium",45,"run",40,"ÉJSZAKAI BAGOLY","NIGHT OWL","Érj el 40 kacsát egyetlen játékban.","Reach 40 ducks in a single run."],
+ ["armor5","medium",40,"armored",5,"PÁNCÉLTÖRŐ","ARMOR PIERCER","Győzz le 5 páncélos kacsát.","Take down 5 armored ducks."],
+ ["bomb10","medium",30,"bombesc",10,"BOMBAMENTESÍTŐ","BOMB SQUAD","Hagyd elmenekülni 10 bomba-kacsát lövés nélkül.","Let 10 bomb ducks fly away unshot."],
+ ["heal","medium",35,"heartduck",3,"ÁPOLÓ","MEDIC","Gyógyulj meg 3 szív-kacsa lelövésével.","Heal up by shooting 3 heart ducks."],
+ ["clock5","medium",40,"clock",5,"IDŐUTAZÓ","TIME TRAVELER","Lőj le 5 óra-kacsát.","Shoot 5 clock ducks."],
+ ["boss1","medium",50,"boss",1,"SASVADÁSZ","EAGLE HUNTER","Győzd le a sas-bosst.","Defeat the eagle boss."],
+ ["x15","medium",45,"run_x",15,"EXTRÉM KEZDŐ","EXTREME ROOKIE","Érj el 15 kacsát extrém fokozaton egy játékban.","Reach 15 ducks on Extreme in one run."],
+ ["skin2","medium",60,"skins",3,"GYŰJTŐ","COLLECTOR","Birtokolj 3 skint.","Own 3 skins."],
+ ["mini100","medium",40,"minibig",100,"NAGY NYERTES","BIG WINNER","Nyerj legalább 100 coint a szerencse játékon.","Win at least 100 coins in the Lucky game."],
+
+ ["k1000","hard",80,"kills",1000,"EZERES","THE THOUSAND","Lőj le összesen 1000 kacsát.","Shoot 1,000 ducks in total."],
+ ["c15","hard",90,"combo",15,"LÁNCMESTER","COMBO MASTER","Érj el 15-ös láncot.","Reach a 15× combo."],
+ ["sc60k","hard",100,"runscore",60000,"PONTZÁPOR","SCORE STORM","Szerezz 60 000 pontot egyetlen játékban.","Score 60,000 points in a single run."],
+ ["x30","hard",110,"run_x",30,"EXTRÉM VADÁSZ","EXTREME HUNTER","Érj el 30 kacsát extrém fokozaton egy játékban.","Reach 30 ducks on Extreme in one run."],
+ ["flaw25","hard",90,"flaw",25,"KARCOLÁSMENTES","FLAWLESS","Érj el 25 kacsát úgy, hogy nem veszítesz szívet.","Reach 25 ducks without losing a heart."],
+ ["acc90","hard",100,"acc30",90,"MESTERLÖVÉSZ","MARKSMAN","90% pontosság legalább 30 lövéssel egy játékban.","90% accuracy with at least 30 shots in one run."],
+ ["gold10","hard",80,"golden",10,"ARANYBÁNYÁSZ","GOLD MINER","Lőj le összesen 10 aranykacsát.","Shoot 10 golden ducks in total."],
+ ["boss5","hard",100,"boss",5,"SASIRTÓ","EAGLE SLAYER","Győzd le a bosst összesen 5-ször.","Defeat the boss 5 times in total."],
+ ["skins5","hard",120,"skins",5,"SKIN-BIRODALOM","SKIN EMPIRE","Birtokolj 5 skint.","Own 5 skins."],
+ ["fast20","hard",100,"fast20",1,"VILLÁMGYORS","LIGHTNING","Lőj le 20 kacsát 50 másodpercen belül.","Shoot 20 ducks within 50 seconds."],
+ ["prun25","hard",80,"prun",25,"FARMKIRÁLY","FARM KING","Találj el 25 tyúkot egyetlen gyakorló körben.","Hit 25 hens in a single practice run."],
+ ["daily10","hard",90,"daily",10,"KITARTÁS","DEDICATED","Teljesíts 10 napi kihívást.","Complete 10 daily challenges."],
+
+ ["k5000","legend",150,"kills",5000,"KACSAMÉSZÁRLÁS","DUCK MASSACRE","Lőj le összesen 5000 kacsát.","Shoot 5,000 ducks in total."],
+ ["flaw40","legend",180,"flaw",40,"ÉRINTHETETLEN","UNTOUCHABLE","Érj el 40 kacsát úgy, hogy nem veszítesz szívet.","Reach 40 ducks without losing a heart."],
+ ["x60","legend",200,"run_x",60,"EXTRÉM LEGENDA","EXTREME LEGEND","Érj el 60 kacsát extrém fokozaton egy játékban.","Reach 60 ducks on Extreme in one run."],
+ ["sc250k","legend",200,"runscore",250000,"REKORDER","RECORD BREAKER","Szerezz 250 000 pontot egyetlen játékban.","Score 250,000 points in a single run."],
+ ["c30","legend",200,"combo",30,"LÁNCISTEN","COMBO GOD","Érj el 30-as láncot.","Reach a 30× combo."],
+ ["bossrun3","legend",180,"bossrun",3,"SASOK URA","LORD OF EAGLES","Győzz le 3 bosst egyetlen játékban.","Defeat 3 bosses in a single run."],
+ ["skins10","legend",200,"skins",SKINS.length,"TELJES GYŰJTEMÉNY","FULL COLLECTION","Birtokold mind a 10 skint.","Own all 10 skins."],
+ ["lvl10","legend",180,"run",90,"AZ ÉG KIRÁLYA","SKY KING","Érj el 90 kacsát egyetlen játékban.","Reach 90 ducks in a single run."],
+ ["acc100","legend",200,"acc40",100,"TÖKÉLETES CÉL","PERFECT AIM","100% pontosság legalább 40 lövéssel egy játékban.","100% accuracy with at least 40 shots in one run."],
+ ["plat","legend",200,"plat",40,"PLATINA","PLATINUM","Szerezz meg 40 másik achievementet.","Unlock 40 other achievements."]
+];
+const achTitle=a=>T(a[5],a[6]),achDesc=a=>T(a[7],a[8]);
+function ensureX(s){if(!s.st||typeof s.st!=="object")s.st={};if(!s.ach||typeof s.ach!=="object")s.ach={}}
+function stVal(s,key){
+  if(key==="skins")return s.owned.length;
+  if(key==="plat")return Object.keys(s.ach).filter(id=>id!=="plat").length;
+  return s.st[key]||0;
+}
+let svT=0;function saveSoon(){clearTimeout(svT);svT=setTimeout(saveSlots,500)}
+function iconCv2(name,col){return iconCv(name,col)}
+/* Steam-szerű felbukkanó */
+let achNext=0;
+function achPop(o){
+  const now=performance.now(),delay=Math.max(0,achNext-now);achNext=now+delay+700;
+  setTimeout(()=>{
+    const st=$("achStack");if(!st)return;
+    const el=document.createElement("div");el.className="achpop";
+    const col=o.kind==="daily"?"#73eff7":TIERS[o.tier].c;
+    el.style.borderColor=col;
+    const ic=document.createElement("div");ic.className="ic";ic.append(iconCv("trophy",col));
+    const tx=document.createElement("div");tx.className="tx";
+    const l1=document.createElement("div");l1.className="l1";l1.style.color=col;
+    l1.textContent=o.kind==="daily"?T("NAPI KIHÍVÁS TELJESÍTVE","DAILY CHALLENGE COMPLETE"):T("ACHIEVEMENT FELOLDVA","ACHIEVEMENT UNLOCKED")+" • "+T(TIERS[o.tier].hu,TIERS[o.tier].en);
+    const l2=document.createElement("div");l2.className="l2";l2.textContent=o.name;
+    const l3=document.createElement("div");l3.className="l3";l3.textContent=o.sub||"";
+    const l4=document.createElement("div");l4.className="l4";l4.textContent="+"+o.coins+" COIN";
+    tx.append(l1,l2,l3,l4);el.append(ic,tx);st.append(el);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in")));
+    Snd.ach();
+    setTimeout(()=>{el.classList.remove("in");setTimeout(()=>el.remove(),450)},4300);
+  },delay);
+}
+function achRefresh(){
+  const s=S();if(!s)return;ensureX(s);
+  let got=false;
+  for(const a of ACH){
+    if(s.ach[a[0]])continue;
+    if(stVal(s,a[3])>=a[4]){
+      s.ach[a[0]]=Date.now();s.coins+=a[2];s.st.achCoins=(s.st.achCoins||0)+a[2];got=true;
+      achPop({kind:"ach",tier:a[1],name:achTitle(a),sub:achDesc(a),coins:a[2]});
+    }
+  }
+  if(got){coinsEl.textContent=fmt(s.coins);saveSoon();achRefresh()}
+}
+/* Napi kihívások: dátumból generálva, minden nap 3 új */
+const DT=[
+ ["kills",[15,25,40],"Lőj le {n} kacsát","Shoot {n} ducks"],
+ ["run",[12,20,30],"Érj el {n} kacsát egyetlen játékban","Reach {n} ducks in a single run"],
+ ["combo",[4,7,11],"Érj el {n}-es láncot","Reach a {n}× combo"],
+ ["streak",[8,12,18],"{n} találat egymás után mellélövés nélkül","{n} hits in a row without a miss"],
+ ["runscore",[8000,15000,30000],"Szerezz {n} pontot egy játékban","Score {n} points in one run"],
+ ["golden",[1,2,3],"Lőj le {n} aranykacsát","Shoot {n} golden ducks"],
+ ["armored",[2,3,5],"Győzz le {n} páncélos kacsát","Take down {n} armored ducks"],
+ ["boss",[1,1,2],"Győzd le a sas-bosst {n}×","Defeat the eagle boss {n}×"],
+ ["xkills",[8,15,25],"Lőj le {n} kacsát extrém fokozaton","Shoot {n} ducks on Extreme"],
+ ["games",[2,3,4],"Játssz {n} játékot","Play {n} games"],
+ ["fetch",[2,3,5],"Küldd aportra a kutyát {n}×","Send the dog to fetch {n}×"],
+ ["phits",[10,20,30],"Találj el {n} tyúkot gyakorláskor","Hit {n} hens in practice"],
+ ["clock",[1,2,3],"Lőj le {n} óra-kacsát","Shoot {n} clock ducks"],
+ ["coins",[60,120,200],"Keress {n} coint","Earn {n} coins"],
+ ["bombesc",[2,4,6],"Hagyd elmenekülni {n} bomba-kacsát","Let {n} bomb ducks escape"]
+];
+const DREW=[40,80,150],DBONUS=100;
+const todayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function dailyEnsure(s){
+  const t=todayKey();
+  if(s.daily&&s.daily.date===t&&Array.isArray(s.daily.list)&&s.daily.list.length===3)return s.daily;
+  let h=7;for(const ch of t)h=(h*31+ch.charCodeAt(0))|0;
+  const rnd=mulberry(h^0x5bd1e995),pool=DT.slice(),list=[];
+  for(let i=0;i<3;i++){const tpl=pool.splice(Math.floor(rnd()*pool.length),1)[0];list.push({k:tpl[0],goal:tpl[1][i],hu:tpl[2],en:tpl[3],reward:DREW[i]})}
+  s.daily={date:t,list,prog:{},done:{},bonus:false};saveSoon();return s.daily;
+}
+const dText=c=>T(c.hu,c.en).replace("{n}",fmt(c.goal));
+function dailyTrack(s,k,n,max){
+  const d=dailyEnsure(s);
+  d.list.forEach((c,i)=>{
+    if(c.k!==k||d.done[i])return;
+    const cur=max?Math.max(d.prog[i]||0,n):(d.prog[i]||0)+n;d.prog[i]=cur;
+    if(cur>=c.goal){
+      d.done[i]=true;s.coins+=c.reward;s.st.daily=(s.st.daily||0)+1;
+      achPop({kind:"daily",name:dText(c),sub:"",coins:c.reward});
+      if(!d.bonus&&d.list.every((_,j)=>d.done[j])){
+        d.bonus=true;s.coins+=DBONUS;
+        achPop({kind:"daily",name:T("MIND A 3 NAPI KIHÍVÁS KÉSZ!","ALL 3 DAILY CHALLENGES DONE!"),sub:"",coins:DBONUS});
+      }
+      coinsEl.textContent=fmt(s.coins);
+    }
+  });
+}
+function track(k,n){
+  const s=S();if(!s)return;ensureX(s);
+  const mx=MAXK.has(k);
+  s.st[k]=mx?Math.max(s.st[k]||0,n):(s.st[k]||0)+n;
+  dailyTrack(s,k,n,mx);
+  achRefresh();saveSoon();
+}
+const RUN={shots:0,hits:0,streak:0,noHeart:0,bossN:0,t:0,nextBoss:25};
+function resetR(){RUN.shots=RUN.hits=RUN.streak=RUN.noHeart=RUN.bossN=0;RUN.t=0;RUN.nextBoss=25}
+
+function aCard(o){
+  const c=document.createElement("div");c.className="acard"+(o.done?" done":"");
+  const ic=document.createElement("div");ic.className="aic";ic.append(iconCv(o.done?"check":"lock",o.done?"#a7f070":"#6b7384"));
+  const tx=document.createElement("div");tx.className="atx";
+  const nm=document.createElement("div");nm.className="anm";nm.textContent=o.name;tx.append(nm);
+  if(o.desc){const d=document.createElement("div");d.className="ads";d.textContent=o.desc;tx.append(d)}
+  const bar=document.createElement("div");bar.className="abar";const f=document.createElement("i");
+  f.style.width=Math.round(Math.min(1,o.prog/o.goal)*100)+"%";bar.append(f);
+  const pr=document.createElement("span");pr.textContent=fmt(Math.min(o.prog,o.goal))+"/"+fmt(o.goal);
+  const row=document.createElement("div");row.className="apr";row.append(bar,pr);tx.append(row);
+  const rt=document.createElement("div");rt.className="art";
+  const ch=document.createElement("div");ch.className="chip";ch.textContent=o.tier;ch.style.color=o.col;ch.style.borderColor=o.col;
+  const cn=document.createElement("div");cn.className="acoin";cn.textContent="+"+o.coins;
+  rt.append(ch,cn);c.append(ic,tx,rt);return c;
+}
+let achFilter="all";
+function achView(s,d){
+  const w=document.createElement("div");w.className="achv";
+  const now=new Date(),ms=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)-now,hh=Math.floor(ms/36e5),mm=Math.floor(ms%36e5/6e4);
+  const h1=document.createElement("div");h1.className="achsec";
+  h1.innerHTML="<span>"+T("NAPI KIHÍVÁSOK","DAILY CHALLENGES")+" • "+Object.keys(d.done).length+"/3</span><span>"+T("ÚJ","RESET")+": "+hh+":"+String(mm).padStart(2,"0")+"</span>";
+  w.append(h1);
+  const dl=document.createElement("div");dl.className="alist d3";
+  d.list.forEach((c,i)=>dl.append(aCard({done:!!d.done[i],name:dText(c),desc:"",prog:d.prog[i]||0,goal:c.goal,coins:c.reward,tier:T(["KÖNNYŰ","KÖZEPES","NEHÉZ"][i],["EASY","MEDIUM","HARD"][i]),col:["#d08c58","#c8d0dc","#ffcd75"][i]})));
+  w.append(dl);
+  const bn=document.createElement("div");bn.className="abonus"+(d.bonus?" on":"");
+  bn.textContent=T("MIND A 3 TELJESÍTVE: +"+DBONUS+" COIN BÓNUSZ","ALL 3 COMPLETE: +"+DBONUS+" COIN BONUS")+(d.bonus?"  ✓":"");w.append(bn);
+  const h2=document.createElement("div");h2.className="achsec";
+  h2.innerHTML="<span>ACHIEVEMENTS • "+ACH.filter(a=>s.ach[a[0]]).length+"/"+ACH.length+"</span>";w.append(h2);
+  const tabs=document.createElement("div");tabs.className="ftabs";
+  [["all",T("MIND","ALL"),"#fff"],...Object.entries(TIERS).map(([k,v])=>[k,T(v.hu,v.en),v.c])].forEach(([k,l,col])=>{
+    const b=document.createElement("button");b.className="ftab"+(achFilter===k?" on":"");b.textContent=l;b.style.setProperty("--tc",col);
+    b.onclick=()=>{b.blur();achFilter=k;const y=panel.scrollTop;showMenu("achv");panel.scrollTop=y};tabs.append(b);
+  });
+  w.append(tabs);
+  const al=document.createElement("div");al.className="alist";
+  ACH.filter(a=>achFilter==="all"||a[1]===achFilter).forEach(a=>{
+    const T0=TIERS[a[1]];
+    al.append(aCard({done:!!s.ach[a[0]],name:achTitle(a),desc:achDesc(a),prog:stVal(s,a[3]),goal:a[4],coins:a[2],tier:T(T0.hu,T0.en),col:T0.c}));
+  });
+  w.append(al);return w;
+}
+
 /* ====== Menük ====== */
 const hintKb=()=>T("KATT = LÖVÉS &nbsp;•&nbsp; R = ÚJRATÖLTÉS &nbsp;•&nbsp; Q = KUTYA &nbsp;•&nbsp; ESC = MENÜ","CLICK = SHOOT &nbsp;•&nbsp; R = RELOAD &nbsp;•&nbsp; Q = DOG &nbsp;•&nbsp; ESC = MENU");
 const hintTouch=()=>T("ÉRINTÉS = LÖVÉS &nbsp;•&nbsp; ÚJRATÖLT. ÉS KUTYA GOMB &nbsp;•&nbsp; MENÜ GOMB","TAP = SHOOT &nbsp;•&nbsp; RELOAD AND DOG BUTTONS &nbsp;•&nbsp; MENU BUTTON");
@@ -1787,6 +2126,8 @@ const helpText=()=>T(
  "<p><b>KUTYA:</b> a lelőtt kacsák a fűben maradnak. Ha megnyomod a Q-t, a kutya összeszedi őket, és a pontjuk megduplázódik. 30 másodpercenként használhatod.</p>"+
  "<p><b>COIN:</b> minden lelőtt kacsáért coin jár (könnyű 2, normál 5, extrém 10). A SKIN BOLTBAN skinekre költheted (2000/db), vagy a SZERENCSE JÁTÉKBAN kockáztathatsz 100 coint (20 percenként).</p>"+
  "<p><b>GYAKORLÁS:</b> a menüben a GYAKORLÁS gombbal egy farmra jutsz: 1 percig tyúk-céltáblákat lőhetsz, pont és coin nélkül.</p>"+
+ "<p><b>SPECIÁLIS KACSÁK:</b> arany (×4 pont, ×5 coin), páncélos (2 lövés), bomba (NE LŐD! −1 szív), szív (+1 élet), óra (+5 mp). 25 kacsánként megjelenik a SAS-BOSS!</p>"+
+ "<p><b>EREDMÉNYEK:</b> 50 achievement és napi 3 kihívás ad coint – a slot menüben nézheted meg.</p>"+
  "<p><b>MENTÉS:</b> a szünet menüben a MENTÉS gombbal a félbehagyott játékot a slotodba teheted, és később onnan folytathatod.</p>",
  "<p><b>GOAL:</b> shoot the flying ducks before time runs out or you lose all your hearts.</p>"+
  "<p><b>PC:</b> mouse = aim • left click = shoot • R = reload • Q = dog • ESC = menu.</p>"+
@@ -1797,6 +2138,8 @@ const helpText=()=>T(
  "<p><b>DOG:</b> downed ducks stay in the grass. Press Q and the dog fetches them, doubling their points. Usable every 30 seconds.</p>"+
  "<p><b>COINS:</b> every duck gives coins (easy 2, normal 5, extreme 10). Spend them on skins in the SKIN SHOP (2000 each), or risk 100 coins in the LUCKY GAME (once every 20 minutes).</p>"+
  "<p><b>PRACTICE:</b> PRACTICE in the menu takes you to a farm: shoot hen targets for 1 minute with no score and no coins.</p>"+
+ "<p><b>SPECIAL DUCKS:</b> golden (×4 points, ×5 coins), armored (2 hits), bomb (DON'T SHOOT! −1 heart), heart (+1 life), clock (+5 s). Every 25 ducks the EAGLE BOSS appears!</p>"+
+ "<p><b>ACHIEVEMENTS:</b> 50 achievements and 3 daily challenges award coins – see them in the slot menu.</p>"+
  "<p><b>SAVING:</b> use SAVE in the pause menu to put an unfinished game into your slot and continue it later.</p>");
 const ICONS={
  play:["1000000","1110000","1111000","1111100","1111000","1110000","1000000"],
@@ -1813,6 +2156,11 @@ const ICONS={
  globe:["0111110","1010101","1010101","1111111","1010101","1010101","0111110"],
  check:["0000001","0000011","1000110","1101100","0111000","0010000","0000000"],
  x:["1000001","0100010","0010100","0001000","0010100","0100010","1000001"],
+ trophy:["1111111","1011101","1011101","0111110","0011100","0001000","0111110"],
+ lock:["0011100","0100010","0100010","1111111","1110111","1110111","1111111"],
+ heart:["0110110","1111111","1111111","0111110","0011100","0001000","0000000"],
+ clock:["0111110","1001001","1001001","1001111","1000001","1000001","0111110"],
+ bomb:["0000011","0000100","0011100","0111110","0111110","0111110","0011100"],
  plus:["0001000","0001000","0001000","1111111","0001000","0001000","0001000"]};
 function btnKind(l){
   l=l.toUpperCase();
@@ -1826,6 +2174,7 @@ function btnKind(l){
   if(/^MENTÉS ÉS|^SAVE &/.test(l))return["pri","save"];
   if(/SZERENCSE|LUCKY/.test(l))return["sec","dice"];
   if(/GYAKORL|PRACTICE/.test(l))return["sec","target"];
+  if(/EREDMÉNY|ACHIEVEMENTS/.test(l))return["sec","trophy"];
   if(/SKIN/.test(l))return["sec","coin"];
   if(/BEÁLLÍT|SETTINGS/.test(l))return["sec","gear"];
   if(/^(MENTÉS|SAVE)/.test(l))return["sec","save"];
@@ -1904,7 +2253,7 @@ function skinCard(k){
     if(eq)return;
     if(!owned){
       if(s.coins<SKIN_PRICE){menuNote=T("MÉG "+fmt(SKIN_PRICE-s.coins)+" COIN KELL A(Z) "+skinName(k)+" SKINHEZ","YOU NEED "+fmt(SKIN_PRICE-s.coins)+" MORE COINS FOR THE "+skinName(k)+" SKIN");Snd.deny();storeRefresh();return}
-      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();menuNote=T("MEGVETTED: ","PURCHASED: ")+skinName(k)+" – "+perkText(k.id);
+      s.coins-=SKIN_PRICE;s.owned.push(k.id);Snd.buy();achRefresh();menuNote=T("MEGVETTED: ","PURCHASED: ")+skinName(k)+" – "+perkText(k.id);
     }else menuNote=T("FELSZERELVE: ","EQUIPPED: ")+skinName(k)+(k.id==="classic"?"":" – "+perkText(k.id));
     s.skin=k.id;skinId=k.id;saveSlots();updateHUD();storeRefresh();
   };
@@ -1922,7 +2271,7 @@ function showMenu(kind,nb){
   overlay.classList.toggle("title",inTitle);
   document.body.classList.toggle("titlemode",inTitle);
   panel.classList.toggle("plain",kind==="title");
-  panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help"||kind==="store");
+  panel.classList.toggle("wide",kind==="slots"||kind==="difficulty"||kind==="help"||kind==="store"||kind==="achv");
   settingsEl.style.display=kind==="settings"?"block":"none";
   ovHint.style.display="none";
   ovHint.innerHTML=document.body.classList.contains("touch")?hintTouch():hintKb();
@@ -1951,13 +2300,14 @@ function showMenu(kind,nb){
   }else if(kind==="slotmenu"&&s){
     ovTitle.textContent="SLOT "+(cur+1);
     ovText.innerHTML="COIN: <b>"+fmt(s.coins)+"</b> • "+T("REKORD","BEST")+": <b>"+fmt(s.stats.best)+"</b> • "+T("KACSA","DUCKS")+": <b>"+fmt(s.stats.ducks)+"</b> • "+T("JÁTÉK","GAMES")+": <b>"+s.stats.games+"</b>"+
-      (s.run?"<br>"+T("MENTETT JÁTÉK","SAVED GAME")+": <b>"+fmt(s.run.score)+"</b> "+T("pont","pts")+" • <b>"+s.run.kills+"</b> "+T("kacsa","ducks")+" • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> "+T("hátra","left"):"");
+      (s.run?"<br>"+T("MENTETT JÁTÉK","SAVED GAME")+": <b>"+fmt(s.run.score)+"</b> "+T("pont","pts")+" • <b>"+s.run.kills+"</b> "+T("kacsa","ducks")+" • <b>"+DN[s.run.diff]+"</b> • <b>"+fmtTime(s.run.timeLeft)+"</b> "+T("hátra","left"):"")+"<br>"+T("NAPI KIHÍVÁS","DAILY")+": <b>"+Object.keys(dailyEnsure(s).done).length+"/3</b> • "+T("EREDMÉNYEK","ACHIEVEMENTS")+": <b>"+ACH.filter(a=>s.ach[a[0]]).length+"/"+ACH.length+"</b>";
     if(s.run)menuBtns.append(mkBtn(T("FOLYTATÁS","CONTINUE"),()=>startGame(s.run)));
     menuBtns.append(
       mkBtn(T("ÚJ JÁTÉK","NEW GAME"),()=>{diffFrom="slotmenu";showMenu("difficulty")}),
       mkBtn(T("SZERENCSE JÁTÉK","LUCKY GAME"),()=>showMenu("minimenu")),
       mkBtn(T("GYAKORLÁS","PRACTICE"),()=>{practiceFrom="slotmenu";showMenu("practicemenu")}),
       mkBtn(T("SKIN BOLT","SKIN SHOP"),()=>{storeFrom="slotmenu";showMenu("store")}),
+      mkBtn(T("EREDMÉNYEK","ACHIEVEMENTS"),()=>showMenu("achv")),
       mkBtn(T("BEÁLLÍTÁSOK","SETTINGS"),()=>{settingsFrom="slotmenu";showMenu("settings")}),
       mkBtn(T("SLOT TÖRLÉSE","DELETE SLOT"),()=>showMenu("confirmDelete")),
       mkBtn(T("VISSZA","BACK"),()=>showMenu("slots")));
@@ -2023,6 +2373,13 @@ function showMenu(kind,nb){
     screenBody.append(wrap);
     menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu(storeFrom)));
     menuBack=()=>showMenu(storeFrom);
+  }else if(kind==="achv"&&s){
+    ensureX(s);const dd=dailyEnsure(s);
+    ovTitle.textContent=T("EREDMÉNYEK","ACHIEVEMENTS");
+    ovText.innerHTML=T("EGYENLEG","BALANCE")+": <b>"+fmt(s.coins)+" COIN</b> • "+T("ELÉRT","UNLOCKED")+": <b>"+ACH.filter(a=>s.ach[a[0]]).length+"/"+ACH.length+"</b> • "+T("EREDMÉNYEKBŐL","FROM ACHIEVEMENTS")+": <b>"+fmt(s.st.achCoins||0)+" COIN</b>";
+    screenBody.append(achView(s,dd));
+    menuBtns.append(mkBtn(T("VISSZA","BACK"),()=>showMenu("slotmenu")));
+    menuBack=()=>showMenu("slotmenu");
   }else if(kind==="settings"){
     ovTitle.textContent=T("BEÁLLÍTÁSOK","SETTINGS");
     ovText.textContent="SLOT "+(cur+1)+T(" • a beállítások slotonként mentődnek"," • settings are saved per slot");
@@ -2123,7 +2480,7 @@ function update(dt){
 
   if(state==="play")updateReload(dt);
   if(state==="play"){
-    timeLeft-=dt;
+    RUN.t+=dt;timeLeft-=dt;
     const sec=Math.ceil(timeLeft);
     if(sec!==lastSec){lastSec=sec;updateTimerHUD()}
     if(timeLeft<=0){
@@ -2133,7 +2490,8 @@ function update(dt){
     spawnTimer-=dt;
     const ex=difficulty.value==="extreme";
     const target=difficulty.value==="easy"?2:difficulty.value==="normal"?3:Math.min(7,5+Math.floor(kills/12));
-    if(spawnTimer<=0&&ducks.length+pending.length<target){spawnDuck();spawnTimer=ex?rand(.2,.6):rand(.5,1.3)}
+    if(!ducks.some(o=>o.boss)&&kills>=RUN.nextBoss&&timeLeft>5)spawnBoss();
+    if(spawnTimer<=0&&ducks.filter(o=>!o.boss).length+pending.length<target){spawnDuck();spawnTimer=ex?rand(.2,.6):rand(.5,1.3)}
     if(ex){                                              // extrém: időnként hullám érkezik
       waveT-=dt;
       if(waveT<=0){waveT=rand(11,15);for(let n=0;n<3;n++)spawnDuck();showToast(T("HULLÁM ÉRKEZIK!","INCOMING WAVE!"),"#ff6a6a");Snd.wave();screenFlash=.08}
@@ -2142,9 +2500,12 @@ function update(dt){
   }
   for(let i=ducks.length-1;i>=0;i--){
     const d=ducks[i];updateDuck(d,dt);
+    if(d.boss&&d.life>0)continue;
     if(d.x<-30||d.x>VW+30||d.y<-24||d.y>GY+8){
-      ducks.splice(i,1);combo=0;updateHUD();
-      if(state==="play")pending.push(.3);
+      ducks.splice(i,1);
+      if(d.boss){showToast(T("A SAS ELREPÜLT…","THE EAGLE FLEW AWAY…"),"#94b0c2");RUN.nextBoss=kills+25}
+      else if(d.kind==="bomb"){if(state==="play"){track("bombesc",1);pending.push(.3)}}
+      else{combo=0;updateHUD();if(state==="play")pending.push(.3)}
     }
   }
   for(let i=falling.length-1;i>=0;i--){
@@ -2156,7 +2517,7 @@ function update(dt){
         c:pick(["#7a4a2a","#a8703c","#58b833","#b06a30"]),s:pick([1,2]),g:220,dr:1});
       for(let n=0;n<3;n++)P({x:f.x+rand(-4,4),y:f.gy-1,vx:rand(-6,6),vy:-rand(6,14),life:rand(.4,.7),c:"#c8ccd8",s:2,sm:true});
       Snd.thud();
-      lying.push({x:Math.max(10,Math.min(VW-10,f.x)),y:f.gy,pts:f.pts,face:f.face,life:LIE_TIME});
+      lying.push({x:Math.max(10,Math.min(VW-10,f.x)),y:f.gy,pts:f.pts,face:f.face,set:f.set,life:LIE_TIME});
       falling.splice(i,1);
     }
   }
@@ -2193,13 +2554,13 @@ function render(){
   for(const l of lying){
     if(l.life<2.5&&((frame>>2)&1))continue;                        // eltűnés előtt villog
     ctx.fillStyle="rgba(10,20,30,.3)";ctx.fillRect(Math.round(l.x)-8,Math.round(l.y)+8,16,2);
-    drawSpr(DUCKS[2],l.x,l.y,l.face,true);
+    drawSpr((l.set||DUCKS)[2],l.x,l.y,l.face,true);
     if(dog.cd<=0&&((frame>>3)&1)){                                 // csillogás: a kutya ideje!
       const gx=Math.round(l.x)+7,gy=Math.round(l.y)-9;
       ctx.fillStyle="#fff5b0";ctx.fillRect(gx,gy-1,1,3);ctx.fillRect(gx-1,gy,3,1);
     }
   }
-  for(const f of falling)drawSpr(f.flash>0?DUCKS_W[0]:DUCKS[0],f.x+(f.flash>0?0:Math.round(Math.sin(f.y*.4))),f.y,f.face,f.flash<=0);
+  for(const f of falling)drawSpr(f.flash>0?DUCKS_W[0]:(f.set||DUCKS)[0],f.x+(f.flash>0?0:Math.round(Math.sin(f.y*.4))),f.y,f.face,f.flash<=0);
   for(const d of ducks)drawDuck(d);
   if(state==="mini")drawMini();
   ctx.drawImage(bgFront,0,0);
@@ -2384,6 +2745,8 @@ const Snd=(()=>{
       tone(170,t,.3,"sawtooth",.28,0,70);noise(t,.2,.25,"lowpass",800,200)},
     cluck(){if(!ok())return;const t=ac.currentTime;tone(520,t,.05,"square",.08,0,760);tone(640,t+.07,.07,"square",.08,0,430)},
     clang(){if(!ok())return;const t=ac.currentTime;tone(1568,t,.07,"square",.13);tone(2093,t+.04,.22,"triangle",.12);noise(t,.05,.2,"highpass",3000,0)},
+    ach(){if(!ok())return;const t=ac.currentTime;[784,988,1319,1568].forEach((f,i)=>tone(f,t+i*.08,.2,'triangle',.2));tone(2093,t+.34,.45,'sine',.2)},
+    eagle(){if(!ok())return;const t=ac.currentTime;tone(1900,t,.45,'sawtooth',.16,0,1100);tone(1500,t+.28,.4,'sawtooth',.14,0,800);noise(t,.5,.2,'bandpass',2200,900)},
     start(){if(!ok())return;const t=ac.currentTime;
       [392,523,659,784].forEach((f,i)=>tone(f,t+i*.09,.18,"square",.14))},
     over(){if(!ok())return;const t=ac.currentTime;
@@ -2391,7 +2754,7 @@ const Snd=(()=>{
   };
   return api;
 })();
-document.addEventListener("click",e=>{if(e.target.closest(".btn,.slotcard,.diffcard,.segbtn,.skincard"))Snd.click()});
+document.addEventListener("click",e=>{if(e.target.closest(".btn,.slotcard,.diffcard,.segbtn,.skincard,.ftab"))Snd.click()});
 addEventListener("pointerdown",()=>Snd.init(),true);
 addEventListener("keydown",()=>Snd.init(),true);
 
