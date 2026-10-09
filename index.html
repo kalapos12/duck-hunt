@@ -304,6 +304,22 @@ body.touch #titleArt{filter:none}
 #iosHelp p.sm{color:#7b8fa0;font-size:8px}
 #iosHelp b{color:var(--gold);font-weight:400}
 #iosHelp .btn{width:140px;margin-top:6px}
+
+@media (max-height:520px),(max-width:900px){
+ #hud{left:max(6px,env(safe-area-inset-left));top:4px;gap:4px;max-width:calc(100% - 118px)}
+ .card{padding:2px 5px 3px;border-width:2px;box-shadow:0 0 0 1px #000,2px 2px 0 1px rgba(0,0,0,.45)}
+ .label{font-size:5px;margin-bottom:2px}
+ .value{font-size:8px}
+ #hearts{height:13px;gap:1px}.heart{width:14px;height:13px}
+ #shells{height:11px;gap:1px}.shell{width:5px;height:11px}
+ #controls{right:max(6px,env(safe-area-inset-right));top:4px;padding:3px 4px}
+ #controls .btn{font-size:6px;padding:3px 5px;margin-top:2px}
+ #achStack{left:6px;bottom:6px;gap:4px}
+ .achpop{min-width:0;max-width:210px;gap:6px;padding:4px 8px 4px 4px;border-width:2px;box-shadow:0 0 0 2px #000,3px 3px 0 2px rgba(0,0,0,.5)}
+ .achpop .ic canvas{width:20px;height:20px}
+ .achpop .l1{font-size:4.5px;margin-bottom:2px}.achpop .l2{font-size:6.5px;margin-bottom:2px}
+ .achpop .l3{display:none}.achpop .l4{font-size:6px;margin-top:2px}
+}
 </style>
 </head>
 <body>
@@ -1987,6 +2003,7 @@ function achPop(o){
   const now=performance.now(),delay=Math.max(0,achNext-now);achNext=now+delay+700;
   setTimeout(()=>{
     const st=$("achStack");if(!st)return;
+    while(st.children.length>=2)st.firstChild.remove();
     const el=document.createElement("div");el.className="achpop";
     const col=o.kind==="daily"?"#73eff7":TIERS[o.tier].c;
     el.style.borderColor=col;
