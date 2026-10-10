@@ -2308,7 +2308,7 @@ function showMenu(kind,nb){
     ovBest.textContent=bestAll>0?T("LEGJOBB EREDMÉNY: ","BEST SCORE: ")+fmt(bestAll):"";
     ovHint.style.display="";
     menuBtns.append(mkBtn(T("JÁTÉK","PLAY"),()=>showMenu("slots")),mkBtn(T("HOGYAN KELL JÁTSZANI?","HOW TO PLAY"),()=>showMenu("help")),
-      mkBtn("LANGUAGE: "+LNAME[LANG],()=>setLang(LANGS[(LANGS.indexOf(LANG)+1)%LANGS.length])));
+      mkBtn("LANGUAGE: "+LANG.toUpperCase(),()=>setLang(LANGS[(LANGS.indexOf(LANG)+1)%LANGS.length])));
   }else if(kind==="slots"){
     ovTitle.textContent=T("MENTÉSI HELYEK","SAVE SLOTS");
     ovText.textContent=T("Válassz egy slotot. Minden slot külön tárolja a beállításaidat, a rekordjaidat és a félbehagyott játékodat.","Pick a slot. Each slot stores its own settings, records and unfinished game.");
