@@ -1,4 +1,4 @@
-<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Duck Flight</title></head><body>
+<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Duck Flight</title><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"></head><body>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <style>
@@ -369,6 +369,30 @@ body.touch #titleArt{filter:none}
  #ovBest{font-size:10px}
  #iosHelp p{font-size:9px}
 }
+
+/* Ha a pixel betűtípus nem tölt be (offline fájl), vastag, nagyobb tartalék betű */
+html.nofont,html.nofont *{font-family:"Courier New",Courier,"Liberation Mono",monospace!important;font-weight:700!important}
+html.nofont .label{font-size:11px}
+html.nofont .value{font-size:19px}
+html.nofont .panel p,html.nofont .panel.plain p{font-size:14px}
+html.nofont .setdesc,html.nofont .slotcard .ln,html.nofont .diffcard .ln,html.nofont .hint,html.nofont .legend div{font-size:12px!important}
+html.nofont .btn,html.nofont .segbtn{font-size:13px}
+html.nofont #menuBtns .btn{font-size:15px}
+html.nofont .acard .anm{font-size:12px}html.nofont .acard .ads,html.nofont .acard .apr,html.nofont .acard .art{font-size:10px}
+html.nofont .achpop .l2{font-size:13px}html.nofont .achpop .l1,html.nofont .achpop .l3{font-size:10px}
+html.nofont #toast{font-size:clamp(17px,3vw,30px)}
+html.nofont .pop{font-size:17px}
+@media (max-height:520px),(max-width:900px){
+ html.nofont .label{font-size:9px}
+ html.nofont .value{font-size:13px}
+ html.nofont .panel p,html.nofont .panel.plain p{font-size:11px}
+ html.nofont .setdesc,html.nofont .slotcard .ln,html.nofont .diffcard .ln{font-size:10px!important}
+ html.nofont .btn,html.nofont .segbtn,html.nofont #controls .btn{font-size:10px}
+ html.nofont #menuBtns .btn{font-size:12px}
+ html.nofont .acard .anm{font-size:10px}html.nofont .acard .ads,html.nofont .acard .apr,html.nofont .acard .art{font-size:8.5px}
+ html.nofont .achpop .l2{font-size:10px}html.nofont .achpop .l1{font-size:8px}
+ html.nofont #toast{font-size:16px}
+}
 </style>
 
 <canvas id="titleArt"></canvas>
@@ -434,6 +458,7 @@ body.touch #titleArt{filter:none}
 
 <script>
 "use strict";
+try{(document.fonts&&document.fonts.load?document.fonts.load('12px "Press Start 2P"'):Promise.resolve([])).then(f=>{if(!f||!f.length)document.documentElement.classList.add("nofont")}).catch(()=>document.documentElement.classList.add("nofont"))}catch(e){document.documentElement.classList.add("nofont")}
 const $=id=>document.getElementById(id);
 const LANGS=["hu","en","es","fr","de","it"],LNAME={hu:"MAGYAR",en:"ENGLISH",es:"ESPAÑOL",fr:"FRANÇAIS",de:"DEUTSCH",it:"ITALIANO"},LOC={hu:"hu-HU",en:"en-US",es:"es-ES",fr:"fr-FR",de:"de-DE",it:"it-IT"};
 let LANG=(()=>{try{const v=localStorage.getItem("dfLang");if(LANGS.includes(v))return v}catch(e){}const b=(navigator.language||"en").toLowerCase().slice(0,2);return LANGS.includes(b)?b:"en"})();
