@@ -309,6 +309,66 @@ body.touch #titleArt{filter:none}
  .achpop .l1{font-size:4.5px;margin-bottom:2px}.achpop .l2{font-size:6.5px;margin-bottom:2px}
  .achpop .l3{display:none}.achpop .l4{font-size:6px;margin-top:2px}
 }
+
+/* ====== Olvashatóbb betűméretek (felülírja a korábbi, túl kicsi értékeket) ====== */
+.label{font-size:9px;margin-bottom:7px}
+.value{font-size:16px}
+.panel p{font-size:12px;line-height:1.8}
+.panel.plain p{font-size:clamp(11px,1.7vw,14px)}
+.legend div{font-size:10px}
+.hint{font-size:10px!important}
+#ovBest{font-size:13px}
+.setlabel{font-size:11px}
+.setdesc{font-size:10px;line-height:1.7}
+.segbtn{font-size:10px}
+.btn{font-size:11px}
+.slotcard .nm,.diffcard .dn{font-size:13px}
+.diffcard .dn{font-size:17px}
+.slotcard .ln,.diffcard .ln{font-size:10px;line-height:1.9}
+.slotcard .run,.diffcard .run{font-size:9px}
+.skincard .nm{font-size:10px}
+.skincard .st{font-size:9px}
+.skincard .pk{font-size:8px;min-height:26px}
+.achsec{font-size:11px}
+.achpop .l1{font-size:8px}.achpop .l2{font-size:11px}.achpop .l3{font-size:8px}.achpop .l4{font-size:10px}
+.acard .anm{font-size:10px}.acard .ads{font-size:8px}.acard .apr,.acard .art{font-size:8px}.acard .acoin{font-size:10px}
+.abonus{font-size:9px}.ftab{font-size:9px}
+.acard .ads{color:#b4bccb}.acard.done .ads{color:#d8f5c8}.acard .apr{color:#b4bccb}
+#iosHelp p{font-size:11px}#iosHelp p.sm{font-size:10px}#iosHelp h2{font-size:14px}
+#toast{font-size:clamp(15px,2.6vw,26px)}
+.pop{font-size:15px}
+#menuBtns .btn{font-size:13px}
+#menuBtns .btn.pri{font-size:16px}
+@media (max-height:520px),(max-width:900px){
+ .label{font-size:7px;margin-bottom:3px}
+ .value{font-size:11px}
+ #hearts{height:15px}.heart{width:16px;height:15px}
+ #shells{height:12px}.shell{width:6px;height:12px}
+ #controls .btn{font-size:8px;padding:4px 6px}
+ .panel p{font-size:10px;line-height:1.6}
+ .panel.plain p{font-size:10px}
+ .setlabel{font-size:9px}
+ .setdesc{font-size:8px}
+ .segbtn{font-size:8px}
+ .btn{font-size:9px}
+ .slotcard .nm{font-size:10px}
+ .diffcard .dn{font-size:13px}
+ .slotcard .ln,.diffcard .ln{font-size:8px;line-height:1.7}
+ .slotcard .run,.diffcard .run{font-size:7px}
+ .skincard .nm{font-size:8px}.skincard .st{font-size:7px}.skincard .pk{font-size:6px;min-height:16px}
+ #menuBtns .btn{font-size:10px;min-height:38px}
+ #menuBtns .btn.pri{font-size:12px}
+ .panel.plain #menuBtns .btn.pri{font-size:13px}
+ .achpop .l1{font-size:6px}.achpop .l2{font-size:8px}.achpop .l4{font-size:7px}
+ .achpop{max-width:240px}
+ .acard .anm{font-size:8px}.acard .ads{font-size:7.5px}.acard .apr,.acard .art{font-size:7px}.acard .acoin{font-size:8px}
+ .achsec{font-size:9px}.abonus{font-size:7px}.ftab{font-size:7px}
+ #toast{font-size:14px}
+ .pop{font-size:12px}
+ #reloadBtn,#dogBtn,#abilityBtn{font-size:8px}
+ #ovBest{font-size:10px}
+ #iosHelp p{font-size:9px}
+}
 </style>
 
 <canvas id="titleArt"></canvas>
